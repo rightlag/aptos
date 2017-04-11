@@ -39,6 +39,4 @@ def parse_from(response, specification, encoding='utf-8'):
     instance = json.loads(response.read().decode(encoding))
     operation = specification.paths[path][response._method.lower()]
     schema = operation.responses.get(str(response.status), 'default').schema
-    schema = schema(instance)
-    schema.default = instance
-    return schema
+    return schema(instance)

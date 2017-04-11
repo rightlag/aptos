@@ -1,4 +1,4 @@
-from .primitives import TypeFactory, Reference, Array
+from .primitives import TypeFactory
 
 
 class Swagger:
@@ -58,10 +58,5 @@ class Response:
             schema = instance['schema']
             schema = TypeFactory.construct_type(
                 schema.get('type'), schema.get('format', '')).load(schema)
-            # TODO: fix redundancy
-            if isinstance(schema, Reference):
-                schema.resolve(referrant)
-            elif isinstance(schema, Array) and isinstance(schema.items, Reference):
-                schema.items.resolve(referrant)
-            instance['schema'] = schema
+            instance['schema'] = schema.resolve(referrant)
         return cls(**instance)

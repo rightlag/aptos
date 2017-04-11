@@ -37,6 +37,9 @@ class Primitive:
         self.example = example
         self.format = format
 
+    def resolve(self, referrant=None):
+        return self
+
     @classmethod
     def load(cls, instance):
         return cls(**instance)
@@ -62,6 +65,10 @@ class Array(Primitive):
             items.get('type'), items.get('format', '')).load(items)
         instance['items'] = items
         return super().load(instance)
+
+    def resolve(self, referrant):
+        self.items = self.items.resolve(referrant)
+        return self
 
     def __call__(self, instance):
         for child in instance:
@@ -147,12 +154,7 @@ class Object(Primitive):
                 continue  # already of primitive type
             member = TypeFactory.construct_type(
                 member.get('type'), member.get('format', '')).load(member)
-            # TODO: fix redundancy
-            if isinstance(member, Reference):
-                member.resolve(referrant)
-            elif isinstance(member, Array) and isinstance(member.items, Reference):
-                member.items.resolve(referrant)
-            instance['properties'][name] = member
+            instance['properties'][name] = member.resolve(referrant)
         return super().load(instance)
 
     def __call__(self, instance):
@@ -196,6 +198,7 @@ class Reference:
         if not isinstance(value, Object):
             value = Object.load(value, referrant=referrant)
         self.value = value
+        return self
 
 
     @classmethod
