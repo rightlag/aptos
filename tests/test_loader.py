@@ -21,6 +21,3 @@ class LoaderTestCase(unittest.TestCase):
         self.assertIsInstance(Pet.properties['category'], Reference)
         self.assertIsInstance(Pet.properties['tags'], Array)
         self.assertIsInstance(Pet.properties['tags'].items.value, Object)
-
-        with self.assertRaises(AssertionError):
-            Pet(dict())  # 'name' and 'photoUrls' required
