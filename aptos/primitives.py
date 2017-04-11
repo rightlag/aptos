@@ -70,7 +70,7 @@ class Array(Primitive):
             assert len(instance) <= self.maxItems
         assert len(instance) >= self.minItems
         if self.uniqueItems:
-            assert list(set(instance)) == instance
+            assert len(list(set(instance))) == len(instance)
         return self
 
 
