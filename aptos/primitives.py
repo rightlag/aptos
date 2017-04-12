@@ -200,7 +200,6 @@ class Reference:
         self.value = value
         return self
 
-
     @classmethod
     def load(cls, instance):
         return cls(**instance)
