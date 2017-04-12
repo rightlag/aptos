@@ -13,4 +13,5 @@ class VisitorTestCase(unittest.TestCase):
             os.path.join(os.path.dirname(__file__), 'schemas',
                          'petstore.json')))
         v = specification.definitions['Pet'].accept(AvroSerializer())
+        self.assertEqual(len(v['fields']), 6)
         print(json.dumps(v, indent=2))
