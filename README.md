@@ -1,4 +1,4 @@
-[![Travis](https://img.shields.io/travis/pennsignals/aptos.svg?style=flat-square)](https://travis-ci.org/pennsignals/aptos)
+[![Travis](https://img.shields.io/travis/pennsignals/aptos.svg?style=flat-square)](https://travis-ci.org/pennsignals/aptos) [![Coveralls](https://img.shields.io/coveralls/pennsignals/aptos.svg?style=flat-square)](https://coveralls.io/github/pennsignals/aptos?branch=master)
 
 ```python
 import json
