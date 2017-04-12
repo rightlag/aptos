@@ -3,5 +3,5 @@ python:
 - "3.4"
 - "3.5"
 cache: pip
-install: nose
+install: "pip install nose"
 script: nosetests -v
