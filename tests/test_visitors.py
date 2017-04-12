@@ -10,6 +10,7 @@ class VisitorTestCase(unittest.TestCase):
 
     def runTest(self):
         specification = read(open(
-            os.path.join(os.path.dirname(__file__), 'schemas', 'petstore.json')))
+            os.path.join(os.path.dirname(__file__), 'schemas',
+                         'petstore.json')))
         v = specification.definitions['Pet'].accept(AvroSerializer())
         print(json.dumps(v, indent=2))
