@@ -3,5 +3,9 @@ python:
 - "3.4"
 - "3.5"
 cache: pip
-install: "pip install nose"
-script: nosetests -v
+install:
+- "pip install nose"
+- "pip install flake8"
+script:
+- nosetests -v
+- flake8 .
