@@ -1,7 +1,5 @@
 import re
 
-from .visitors import TypeVisitor
-
 
 class TypeFactory:
 

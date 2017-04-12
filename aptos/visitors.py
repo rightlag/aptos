@@ -23,7 +23,7 @@ class TypeVisitor:
 
 class AvroSerializer(TypeVisitor):
     def visit(self, v):
-         return {'type': v.accept(self)}
+        return {'type': v.accept(self)}
 
     def visitType(self, properties):
         fields = []
