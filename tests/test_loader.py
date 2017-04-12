@@ -8,8 +8,8 @@ from aptos.primitives import Array, Reference, Object
 class LoaderTestCase(unittest.TestCase):
 
     def runTest(self):
-        specification = read(open(
-            os.path.join(os.path.dirname(__file__), 'schemas', 'petstore.json')))
+        specification = read(open(os.path.join(
+            os.path.dirname(__file__), 'schemas', 'petstore.json')))
 
         self.assertEqual(len(specification.definitions), 6)
         definitions = ['Order', 'Category', 'User', 'Tag', 'Pet',

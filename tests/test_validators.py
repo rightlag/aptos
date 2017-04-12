@@ -8,11 +8,12 @@ from aptos.util import read
 class ValidatorTestCase(unittest.TestCase):
 
     def runTest(self):
-        specification = read(open(
-            os.path.join(os.path.dirname(__file__), 'schemas', 'petstore.json')))
+        specification = read(open(os.path.join(
+            os.path.dirname(__file__), 'schemas', 'petstore.json')))
 
         with self.assertRaises(AssertionError):
-            specification.definitions['Pet'](dict())  # 'name' and 'photoUrls' required
+            # 'name' and 'photoUrls' required
+            specification.definitions['Pet'](dict())
 
         s = String(maxLength=5)
         with self.assertRaises(AssertionError):
