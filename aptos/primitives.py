@@ -1,5 +1,7 @@
 import re
 
+from .visitors import TypeVisitor
+
 
 class TypeFactory:
 
@@ -44,6 +46,9 @@ class Primitive:
     def load(cls, instance):
         return cls(**instance)
 
+    def accept(self, visitor):
+        raise NotImplementedError()
+
     def __call__(self, instance):
         raise NotImplementedError()  # validation
 
@@ -57,6 +62,9 @@ class Array(Primitive):
         self.maxItems = maxItems
         self.minItems = minItems
         self.uniqueItems = uniqueItems
+
+    def accept(self, visitor):
+        return visitor.visitArray(self.items)
 
     @classmethod
     def load(cls, instance):
@@ -86,6 +94,9 @@ class Boolean(Primitive):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def accept(self, visitor):
+        return visitor.visitBoolean(self)
+
 
 class Integer(Primitive):
 
@@ -98,6 +109,9 @@ class Integer(Primitive):
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
 
+    def accept(self, visitor):
+        return visitor.visitInt(self)
+
     def __call__(self, instance):
         # TODO: implement validation logic
         return self
@@ -107,6 +121,9 @@ class Long(Integer):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def accept(self, visitor):
+        return visitor.visitLong(self)
 
 
 class Number(Primitive):
@@ -146,6 +163,9 @@ class Object(Primitive):
         self.additionalProperties = additionalProperties
         self.properties = properties
 
+    def accept(self, visitor):
+        return visitor.visitType(self.properties)
+
     @classmethod
     def load(cls, instance, referrant=None):
         # TODO: should referrant be None?
@@ -179,6 +199,9 @@ class String(Primitive):
         self.minLength = minLength
         self.pattern = pattern
 
+    def accept(self, visitor):
+        return visitor.visitString(self)
+
     def __call__(self, instance):
         if self.maxLength:
             assert len(instance) <= self.maxLength
@@ -199,6 +222,9 @@ class Reference:
             value = Object.load(value, referrant=referrant)
         self.value = value
         return self
+
+    def accept(self, visitor):
+        return visitor.visit(self.value)
 
     @classmethod
     def load(cls, instance):
