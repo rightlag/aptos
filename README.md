@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/pennsignals/aptos-draft.svg?token=kDZcsygosGgqF2WJJ1jZ&branch=master)](https://travis-ci.com/pennsignals/aptos-draft)
+[![Travis](https://img.shields.io/travis/pennsignals/aptos.svg?style=flat-square)](https://travis-ci.org/pennsignals/aptos)
 
 ```python
 import json
