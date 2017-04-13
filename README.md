@@ -1,4 +1,11 @@
-[![Travis](https://img.shields.io/travis/pennsignals/aptos.svg?style=flat-square)](https://travis-ci.org/pennsignals/aptos) [![Coveralls](https://img.shields.io/coveralls/pennsignals/aptos.svg?style=flat-square)](https://coveralls.io/github/pennsignals/aptos?branch=master)
+<p align="center">
+  <img src="assets/title.png">
+</p>
+
+<p align="center">
+  <a href="https://travis-ci.org/pennsignals/aptos"><img src="https://img.shields.io/travis/pennsignals/aptos.svg?style=flat-square"></a>
+  <a href="https://coveralls.io/github/pennsignals/aptos"><img src="https://img.shields.io/coveralls/pennsignals/aptos.svg?style=flat-square"></a>
+</p>
 
 ```python
 import json
