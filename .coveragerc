@@ -1,6 +1,5 @@
 [run]
-branch=
-	True
+branch=True
 
 [report]
 exclude_lines=
