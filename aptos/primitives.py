@@ -62,7 +62,7 @@ class Array(Primitive):
         self.uniqueItems = uniqueItems
 
     def accept(self, visitor):
-        return visitor.visitArray(self.items)
+        return visitor.visit_array(self.items)
 
     @classmethod
     def load(cls, instance):
@@ -93,7 +93,7 @@ class Boolean(Primitive):
         super().__init__(**kwargs)
 
     def accept(self, visitor):
-        return visitor.visitBoolean(self)
+        return visitor.visit_boolean(self)
 
 
 class Integer(Primitive):
@@ -108,7 +108,7 @@ class Integer(Primitive):
         self.exclusiveMinimum = exclusiveMinimum
 
     def accept(self, visitor):
-        return visitor.visitInt(self)
+        return visitor.visit_int(self)
 
     def __call__(self, instance):
         # TODO: implement validation logic
@@ -121,7 +121,7 @@ class Long(Integer):
         super().__init__(**kwargs)
 
     def accept(self, visitor):
-        return visitor.visitLong(self)
+        return visitor.visit_long(self)
 
 
 class Number(Primitive):
@@ -162,7 +162,7 @@ class Object(Primitive):
         self.properties = properties
 
     def accept(self, visitor):
-        return visitor.visitType(self.properties)
+        return visitor.visit_type(self.properties)
 
     @classmethod
     def load(cls, instance, referrant=None):
@@ -198,7 +198,7 @@ class String(Primitive):
         self.pattern = pattern
 
     def accept(self, visitor):
-        return visitor.visitString(self)
+        return visitor.visit_string(self)
 
     def __call__(self, instance):
         if self.maxLength:
