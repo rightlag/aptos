@@ -2,6 +2,7 @@ from .primitives import TypeFactory
 
 
 class Swagger:
+
     def __init__(self, swagger='2.0', host='', basePath='', schemes=None,
                  consumes=None, produces=None, paths=None, definitions=None):
         self.swagger = swagger
@@ -17,6 +18,7 @@ class Swagger:
 
 
 class Operation:
+
     def __init__(self, tags=None, summary='', description='',
                  externalDocs=None, operationId='', consumes=None,
                  produces=None, parameters=None, responses=None, schemes=None,
@@ -43,6 +45,7 @@ class Operation:
 
 
 class Response:
+
     def __init__(self, description='', schema=None, headers=None,
                  examples=None):
         self.description = description
