@@ -78,7 +78,7 @@ class Array(Primitive):
 
     def __call__(self, instance):
         for child in instance:
-            self.items(child)  # validate children instances
+            self.items(child)  # validate members
         if self.maxItems:
             assert len(instance) <= self.maxItems
         assert len(instance) >= self.minItems
@@ -159,6 +159,8 @@ class Object(Primitive):
         self.minProperties = minProperties
         self.required = [] if required is None else list(set(required))
         self.additionalProperties = additionalProperties
+        if properties is None:
+            properties = {}
         self.properties = properties
 
     def accept(self, visitor):
@@ -176,6 +178,8 @@ class Object(Primitive):
         return super().load(instance)
 
     def __call__(self, instance):
+        for name, member in instance.items():
+            self.properties[name](member)  # validate members
         if self.maxProperties:
             assert len(instance.keys()) <= self.maxProperties
         assert len(instance.keys()) >= self.minProperties
