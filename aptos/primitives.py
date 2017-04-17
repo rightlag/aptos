@@ -180,12 +180,7 @@ class Object(Primitive):
             assert len(instance.keys()) <= self.maxProperties
         assert len(instance.keys()) >= self.minProperties
         if self.required:
-            # TODO: compare against values in properties?
-            required = list(self.required)  # shallow copy required list
-            for name in instance.keys():
-                if name in required:
-                    required.remove(name)
-            assert len(required) == 0
+            assert len(set(self.required).difference(set(instance))) == 0
         return self
 
 
