@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 
@@ -11,9 +12,29 @@ class ValidatorTestCase(unittest.TestCase):
         specification = read(open(os.path.join(
             os.path.dirname(__file__), 'schemas', 'petstore.json')))
 
+        # sample HTTP response body
+        instance = b"""
+        {
+          "id": 9072482292156331000,
+          "category": {
+            "id": 0,
+            "name": "string"
+          },
+          "name": "doggie",
+          "tags": [
+            {
+              "id": 0,
+              "name": "string"
+            }
+          ],
+          "status": "available"
+        }
+        """
+
         with self.assertRaises(AssertionError):
-            # 'name' and 'photoUrls' required
-            specification.definitions['Pet'](dict())
+            # missing 'photoUrls'
+            specification.definitions['Pet'](
+                json.loads(instance.decode('utf-8')))
 
         s = String(maxLength=5)
         with self.assertRaises(AssertionError):
