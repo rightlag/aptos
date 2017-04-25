@@ -1,102 +1,149 @@
-import re
+class JSONSchema:
+
+    types = (
+        'array', 'boolean', 'integer', 'number', 'null', 'object', 'string')
 
 
-class TypeFactory:
+class JSONEncoder:
+
+    def __call__(self, instance):
+        return {
+            dict: Object,
+            list: Array,
+            tuple: Array,
+            str: String,
+            int: Integer,
+            float: Number,
+            bool: Boolean,
+            type(None): Null,
+        }[instance.__class__]
+
+
+class TypeRegistry:
 
     @staticmethod
-    def construct_type(type, format):
+    def find(type):
+        if type is None:
+            return Reference
+
+        if isinstance(type, list):
+            return Union
+
         return {
-            ('array', ''): Array,
-            ('boolean', ''): Boolean,
-            ('integer', 'int32'): Integer,
-            ('integer', 'int64'): Long,
-            ('number', ''): Number,
-            ('object', ''): Object,
-            ('string', ''): String,
-            ('string', 'date-time'): String,  # TODO: fix dateTime type
-            (None, ''): Reference,  # TODO: try/except instead?
-        }[type, format]
+            'object': Object,
+            'array': Array,
+            'string': String,
+            'integer': Integer,
+            'number': Number,
+            'boolean': Boolean,
+            'null': Null,
+        }[type]
 
 
 class Primitive:
 
-    def __init__(self, enum=None, type='', allOf=None, title='',
-                 description='', default=None, discriminator='',
-                 readOnly=False, xml=None, externalDocs=None, example=None,
-                 format=''):
-        self.enum = [] if enum is None else list(enum)
-        self.type = type
-        self.allOf = allOf
+    keywords = ('enum', 'type', 'allOf', 'anyOf', 'oneOf', 'definitions',)
+
+    def __init__(self, enum=None, type=None, allOf=None, anyOf=None,
+                 oneOf=None, definitions=None, title='', description='',
+                 default=None, **kwargs):
+        # TODO: include `not`
+        self.enum = [] if enum is None else list(set(enum))
+        children = [type] if isinstance(type, str) else list(set(type))
+        assert all([child.lower() in JSONSchema.types for child in children]), 'got an unexpected keyword argument %r' % children.pop()
+        self.type = children if len(children) > 1 else children.pop()
+        self.allOf = [] if allOf is None else list(allOf)
+        self.anyOf = [] if anyOf is None else list(anyOf)
+        self.oneOf = [] if oneOf is None else list(oneOf)
+        self.definitions = {} if definitions is None else definitions
+
+        # Metadata keywords
         self.title = title
         self.description = description
         self.default = default
-        self.discriminator = discriminator
-        self.readOnly = readOnly
-        self.xml = xml
-        self.externalDocs = externalDocs
-        self.example = example
-        self.format = format
+
+    @classmethod
+    def fromJson(cls, instance):
+        return cls(**instance)
 
     def resolve(self, referrant=None):
         return self
 
-    @classmethod
-    def load(cls, instance):
-        return cls(**instance)
-
     def accept(self, visitor):
-        raise NotImplementedError()
+        return {
+            Array: visitor.visitArray,
+            Boolean: visitor.visitBoolean,
+            Integer: visitor.visitInt,
+            Number: visitor.visitLong,
+            Null: visitor.visitNull,
+            Object: visitor.visitDeclared,
+            String: visitor.visitString,
+        }[self.__class__](self)
 
     def __call__(self, instance):
-        raise NotImplementedError()  # validation
+        if self.enum:
+            assert instance in self.enum
+        # TODO: validation for `type`, `allOf`, `anyOf`, `oneOf`, and
+        # `definitions`
+        return self
 
 
 class Array(Primitive):
+    """A JSON array."""
 
-    def __init__(self, items=None, maxItems=0, minItems=0, uniqueItems=False,
-                 **kwargs):
+    keywords = ('additionalItems', 'items', 'maxItems', 'minItems',
+                'uniqueItems',)
+
+    def __init__(self, additionalItems=None, items=None, maxItems=0,
+                 minItems=0, uniqueItems=False, **kwargs):
         super().__init__(**kwargs)
-        self.items = items  # object MUST be a valid JSON Schema
+        self.additionalItems = additionalItems
+        self.items = items
         self.maxItems = maxItems
         self.minItems = minItems
         self.uniqueItems = uniqueItems
 
-    def accept(self, visitor):
-        return visitor.visit_array(self.items)
-
     @classmethod
-    def load(cls, instance):
-        items = instance.get('items', {})
-        items = TypeFactory.construct_type(
-            items.get('type'), items.get('format', '')).load(items)
-        instance['items'] = items
-        return super().load(instance)
+    def fromJson(cls, instance):
+        instance = super().fromJson(instance)
+        items = instance.items
+        instance.items = TypeRegistry.find(items.get('type')).fromJson(items)
+        return instance
 
-    def resolve(self, referrant):
-        self.items = self.items.resolve(referrant)
+    def resolve(self, referrant=None):
+        self.items = self.items.resolve(referrant=referrant)
         return self
 
     def __call__(self, instance):
         for child in instance:
-            self.items(child)  # validate members
+            self.items(child)
+        if not self.additionalItems and isinstance(self.items, Array):
+            assert len(instance) <= self.items
         if self.maxItems:
             assert len(instance) <= self.maxItems
         assert len(instance) >= self.minItems
         if self.uniqueItems:
             assert len(list(set(instance))) == len(instance)
-        return self
+        return super().__call__(instance)
 
 
 class Boolean(Primitive):
+    """A JSON boolean."""
+
+    keywords = ()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def accept(self, visitor):
-        return visitor.visit_boolean(self)
+    def __call__(self, instance):
+        return super().__call__(instance)
 
 
 class Integer(Primitive):
+    """A JSON number without a fraction or exponent part."""
+
+    keywords = ('multipleOf', 'maximum', 'exclusiveMaximum', 'minimum',
+                'exclusiveMinimum',)
 
     def __init__(self, multipleOf=0, maximum=0, exclusiveMaximum=False,
                  minimum=0, exclusiveMinimum=False, **kwargs):
@@ -107,24 +154,27 @@ class Integer(Primitive):
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
 
-    def accept(self, visitor):
-        return visitor.visit_int(self)
-
     def __call__(self, instance):
-        # TODO: implement validation logic
-        return self
-
-
-class Long(Integer):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def accept(self, visitor):
-        return visitor.visit_long(self)
+        if self.multipleOf:
+            assert isinstance((instance / self.multipleOf), int)
+        if self.exclusiveMaximum:
+            if self.maximum:
+                assert instance < self.maximum
+        else:
+            if self.maximum:
+                assert instance <= self.maximum
+        if self.exclusiveMinimum:
+            assert instance > self.minimum
+        else:
+            assert instance >= self.minimum
+        return super().__call__(instance)
 
 
 class Number(Primitive):
+    """Any JSON number.  Number includes integer."""
+
+    keywords = ('multipleOf', 'maximum', 'exclusiveMaximum', 'minimum',
+                'exclusiveMinimum',)
 
     def __init__(self, multipleOf=0, maximum=0, exclusiveMaximum=False,
                  minimum=0, exclusiveMinimum=False, **kwargs):
@@ -136,59 +186,75 @@ class Number(Primitive):
         self.exclusiveMinimum = exclusiveMinimum
 
     def __call__(self, instance):
-        # TODO: implement validation logic
-        return self
+        if self.multipleOf:
+            assert isinstance((instance / self.multipleOf), int)
+        if self.exclusiveMaximum:
+            if self.maximum:
+                assert instance < self.maximum
+        else:
+            if self.maximum:
+                assert instance <= self.maximum
+        if self.exclusiveMinimum:
+            assert instance > self.minimum
+        else:
+            assert instance >= self.minimum
+        return super().__call__(instance)
 
 
 class Null(Primitive):
+    """The JSON null value."""
+
+    keywords = ()
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
     def __call__(self, instance):
-        # TODO: implement validation logic
-        return self
+        return super().__call__(instance)
 
 
 class Object(Primitive):
+    """A JSON object."""
+
+    keywords = ('maxProperties', 'minProperties', 'required',
+                'additionalProperties', 'properties', 'patternProperties',
+                'dependencies',)
 
     def __init__(self, maxProperties=0, minProperties=0, required=None,
-                 additionalProperties=None, properties=None, **kwargs):
+                 additionalProperties=None, properties=None,
+                 patternProperties=None, dependencies=None, **kwargs):
         super().__init__(**kwargs)
         self.maxProperties = maxProperties
         self.minProperties = minProperties
         self.required = [] if required is None else list(set(required))
         self.additionalProperties = additionalProperties
-        if properties is None:
-            properties = {}
-        self.properties = properties
-
-    def accept(self, visitor):
-        return visitor.visit_type(self.properties)
+        self.properties = {} if properties is None else dict(properties)
+        self.patternProperties = patternProperties
+        self.dependencies = dependencies
 
     @classmethod
-    def load(cls, instance, referrant=None):
-        # TODO: should referrant be None?
-        for name, member in instance.get('properties', {}).items():
-            if isinstance(member, Primitive):
-                continue  # already of primitive type
-            member = TypeFactory.construct_type(
-                member.get('type'), member.get('format', '')).load(member)
-            instance['properties'][name] = member.resolve(referrant)
-        return super().load(instance)
+    def fromJson(cls, instance, referrant=None):
+        instance = super().fromJson(instance)
+        for name, member in instance.properties.items():
+            member = TypeRegistry.find(member.get('type')).fromJson(member)
+            instance.properties[name] = member.resolve(referrant=referrant)
+        return instance
 
     def __call__(self, instance):
         for name, member in instance.items():
-            self.properties[name](member)  # validate members
+            self.properties[name](member)
         if self.maxProperties:
             assert len(instance.keys()) <= self.maxProperties
         assert len(instance.keys()) >= self.minProperties
         if self.required:
             assert len(set(self.required).difference(set(instance))) == 0
-        return self
+        return super().__call__(instance)
 
 
 class String(Primitive):
+    """A JSON string."""
+
+    keywords = ('maxLength', 'minLength', 'pattern',)
 
     def __init__(self, maxLength=0, minLength=0, pattern='', **kwargs):
         super().__init__(**kwargs)
@@ -196,16 +262,52 @@ class String(Primitive):
         self.minLength = minLength
         self.pattern = pattern
 
-    def accept(self, visitor):
-        return visitor.visit_string(self)
-
     def __call__(self, instance):
+        import re
+
         if self.maxLength:
             assert len(instance) <= self.maxLength
         assert len(instance) >= self.minLength
         if self.pattern:
             assert re.match(self.pattern, instance) is not None
+        return super().__call__(instance)
+
+
+class Union:
+
+    def __init__(self, type=None, title='', description='', default=None):
+        self.type = type
+
+        # Metadata keywords
+        self.title = title
+        self.description = description
+        self.default = default
+
+    @classmethod
+    def fromJson(cls, instance):
+        types = instance.get('type', [])
+        for i, type in enumerate(types):
+            if isinstance(type, Primitive):
+                continue
+            type = TypeRegistry.find(type)
+            keywords = {}
+            for keyword in instance:
+                if keyword in type.keywords:
+                    keywords[keyword] = instance[keyword]
+            keywords['type'] = type.__name__
+            types[i] = type.fromJson(keywords)
+        return cls(type=types)
+
+    def accept(self, visitor):
+        return visitor.visitUnion(self)
+
+    def resolve(self, referrant=None):
         return self
+
+    def __call__(self, instance):
+        cls = JSONEncoder()(instance)
+        index = [type.__class__ for type in self.type].index(cls)
+        return self.type[index](instance)
 
 
 class Reference:
@@ -213,19 +315,20 @@ class Reference:
     def __init__(self, **kwargs):
         self.value = kwargs.get('$ref', '')
 
-    def resolve(self, referrant):
-        value = referrant['definitions'][self.value.split('/')[-1]]
-        if not isinstance(value, Object):
-            value = Object.load(value, referrant=referrant)
-        self.value = value
-        return self
+    @classmethod
+    def fromJson(cls, instance):
+        return cls(**instance)
 
     def accept(self, visitor):
-        return visitor.visit(self.value)
+        # TODO: better solution?
+        return visitor.visitUnknown(self.value)['type']
 
-    @classmethod
-    def load(cls, instance):
-        return cls(**instance)
+    def resolve(self, referrant=None):
+        value = referrant['definitions'][self.value.split('/')[-1]]
+        if not isinstance(value, Primitive):
+            cls = TypeRegistry.find(value.get('type'))
+            value = cls.fromJson(value, referrant=referrant)
+        return value
 
     def __call__(self, instance):
         return self.value(instance)
