@@ -1,8 +1,5 @@
 class TypeVisitor:
 
-    def visitUnknown(self, unknown):
-        return {'type': unknown.accept(self)}
-
     def visitUnion(self, union):
         children = union.type
         for i, child in enumerate(children):
