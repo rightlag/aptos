@@ -50,7 +50,8 @@ class Primitive:
         # TODO: include `not`
         self.enum = [] if enum is None else list(set(enum))
         children = [type] if isinstance(type, str) else list(set(type))
-        assert all([child.lower() in JSONSchema.types for child in children]), 'got an unexpected keyword argument %r' % children.pop()
+        assert all([child.lower() in JSONSchema.types for child in children]), (  # noqa: E501
+            'got an unexpected keyword argument %r' % children.pop())
         self.type = children if len(children) > 1 else children.pop()
         self.allOf = [] if allOf is None else list(allOf)
         self.anyOf = [] if anyOf is None else list(anyOf)
