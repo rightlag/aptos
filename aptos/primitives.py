@@ -1,10 +1,10 @@
 class JSONSchema:
 
     types = (
-        'array', 'boolean', 'integer', 'number', 'null', 'object', 'string')
+        'array', 'boolean', 'integer', 'number', 'null', 'object', 'string',)
 
 
-class JSONEncoder:
+class EntityMapperTranslator:
 
     def __call__(self, instance):
         return {
@@ -23,9 +23,6 @@ class TypeRegistry:
 
     @staticmethod
     def find(type):
-        if type is None:
-            return Reference
-
         if isinstance(type, list):
             return Union
 
@@ -37,6 +34,7 @@ class TypeRegistry:
             'number': Number,
             'boolean': Boolean,
             'null': Null,
+            None: Reference,
         }[type]
 
 
@@ -64,7 +62,15 @@ class Primitive:
         self.default = default
 
     @classmethod
-    def fromJson(cls, instance):
+    def fromJson(cls, instance, referrant=None):
+        if 'allOf' in instance:
+            properties = {}
+            for schema in instance.get('allOf', []):
+                schema = TypeRegistry.find(schema.get('type')).fromJson(
+                    schema, referrant=referrant)
+                schema = schema.resolve(referrant=referrant)
+                properties.update(schema.properties)
+            instance['properties'] = properties
         return cls(**instance)
 
     def resolve(self, referrant=None):
@@ -105,10 +111,11 @@ class Array(Primitive):
         self.uniqueItems = uniqueItems
 
     @classmethod
-    def fromJson(cls, instance):
-        instance = super().fromJson(instance)
+    def fromJson(cls, instance, referrant=None):
+        instance = super().fromJson(instance, referrant=referrant)
         items = instance.items
-        instance.items = TypeRegistry.find(items.get('type')).fromJson(items)
+        instance.items = TypeRegistry.find(items.get('type')).fromJson(
+            items, referrant=referrant)
         return instance
 
     def resolve(self, referrant=None):
@@ -235,11 +242,20 @@ class Object(Primitive):
 
     @classmethod
     def fromJson(cls, instance, referrant=None):
-        instance = super().fromJson(instance)
+        instance = super().fromJson(instance, referrant=referrant)
         for name, member in instance.properties.items():
-            member = TypeRegistry.find(member.get('type')).fromJson(member)
+            if isinstance(member, (Primitive, Union)):
+                continue
+            member = TypeRegistry.find(member.get('type')).fromJson(
+                member, referrant=referrant)
             instance.properties[name] = member.resolve(referrant=referrant)
         return instance
+
+    class Builder:
+
+        @classmethod
+        def fromFields(cls, fields):
+            return cls
 
     def __call__(self, instance):
         for name, member in instance.items():
@@ -285,7 +301,7 @@ class Union:
         self.default = default
 
     @classmethod
-    def fromJson(cls, instance):
+    def fromJson(cls, instance, referrant=None):
         types = instance.get('type', [])
         for i, type in enumerate(types):
             if isinstance(type, Primitive):
@@ -296,7 +312,7 @@ class Union:
                 if keyword in type.keywords:
                     keywords[keyword] = instance[keyword]
             keywords['type'] = type.__name__
-            types[i] = type.fromJson(keywords)
+            types[i] = type.fromJson(keywords, referrant=referrant)
         return cls(type=types)
 
     def accept(self, visitor):
@@ -306,7 +322,7 @@ class Union:
         return self
 
     def __call__(self, instance):
-        cls = JSONEncoder()(instance)
+        cls = EntityMapperTranslator()(instance)
         index = [type.__class__ for type in self.type].index(cls)
         return self.type[index](instance)
 
@@ -317,12 +333,8 @@ class Reference:
         self.value = kwargs.get('$ref', '')
 
     @classmethod
-    def fromJson(cls, instance):
+    def fromJson(cls, instance, referrant=None):
         return cls(**instance)
-
-    def accept(self, visitor):
-        # TODO: better solution?
-        return visitor.visitUnknown(self.value)['type']
 
     def resolve(self, referrant=None):
         value = referrant['definitions'][self.value.split('/')[-1]]
@@ -330,6 +342,3 @@ class Reference:
             cls = TypeRegistry.find(value.get('type'))
             value = cls.fromJson(value, referrant=referrant)
         return value
-
-    def __call__(self, instance):
-        return self.value(instance)
