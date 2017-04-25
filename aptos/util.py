@@ -4,7 +4,7 @@ from .models import Operation, Swagger
 from .primitives import Object
 
 
-def read(fp):
+def parse(fp):
     try:
         specification = json.loads(fp.read())
     finally:
@@ -16,13 +16,14 @@ def read(fp):
     for definition, schema in definitions.items():
         if 'properties' not in schema:
             continue  # not an object
-        definitions[definition] = Object.load(schema, referrant=specification)
+        definitions[definition] = Object.fromJson(
+            schema, referrant=specification)
 
     paths = specification['paths']
 
     for path, operations in paths.items():
         for method, operation in operations.items():
-            paths[path][method] = Operation.load(
+            paths[path][method] = Operation.fromJson(
                 operation, referrant=specification)
 
     return Swagger(
