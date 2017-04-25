@@ -2,7 +2,7 @@ import os
 import unittest
 
 from aptos.util import parse
-from aptos.primitives import Array, Reference, Object
+from aptos.primitives import Array, Object
 
 
 class LoaderTestCase(unittest.TestCase):
