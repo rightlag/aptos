@@ -1,54 +1,41 @@
 class TypeVisitor:
 
-    def visit(self, v):
-        raise NotImplementedError()
+    def visitUnknown(self, unknown):
+        return {'type': unknown.accept(self)}
 
-    def visit_type(self, properties):
-        raise NotImplementedError()
+    def visitUnion(self, union):
+        children = union.type
+        for i, child in enumerate(children):
+            children[i] = child.accept(self)['type']
+        return {'type': children}
 
-    def visit_array(self, items):
-        raise NotImplementedError()
-
-    def visit_boolean(self, b):
-        raise NotImplementedError()
-
-    def visit_int(self, i):
-        raise NotImplementedError()
-
-    def visit_long(self, i):
-        raise NotImplementedError()
-
-    def visit_string(self, s):
-        raise NotImplementedError()
-
-
-class AvroSerializer(TypeVisitor):
-
-    def visit(self, v):
-        return {'type': v.accept(self)}
-
-    def visit_type(self, properties):
-        fields = []
-        for name, member in properties.items():
-            field = member.accept(self)
-            field['name'] = name
-            fields.append(field)
-        return {'type': 'record', 'fields': fields}
-
-    def visit_array(self, items):
-        items = items.accept(self)
+    def visitArray(self, array):
+        items = array.items.accept(self)
         if 'fields' not in items:
             items = items.get('type')
-        return {'type': 'array', 'items': items}
+        return {'type': {'type': 'array', 'items': items}}
 
-    def visit_boolean(self, b):
+    def visitBoolean(self, boolean):
         return {'type': 'boolean'}
 
-    def visit_int(self, i):
+    def visitInt(self, integer):
         return {'type': 'int'}
 
-    def visit_long(self, i):
+    def visitLong(self, long):
         return {'type': 'long'}
 
-    def visit_string(self, s):
+    def visitNull(self, null):
+        return {'type': 'null'}
+
+    def visitDeclared(self, declared):
+        fields = []
+        for name, member in declared.properties.items():
+            field = member.accept(self)
+            field.update({'name': name, 'doc': member.description})
+            fields.append(field)
+        return {'type': {
+            'type': 'record', 'namespace': __name__, 'name': declared.title,
+            'doc': declared.description, 'fields': fields}}
+
+    def visitString(self, string):
         return {'type': 'string'}

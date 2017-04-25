@@ -2,16 +2,16 @@ import json
 import os
 import unittest
 
-from aptos.util import read
-from aptos.visitors import AvroSerializer
+from aptos.util import parse
+from aptos.visitors import TypeVisitor
 
 
 class VisitorTestCase(unittest.TestCase):
 
     def runTest(self):
-        specification = read(open(
+        specification = parse(open(
             os.path.join(os.path.dirname(__file__), 'schemas',
                          'petstore.json')))
-        v = specification.definitions['Pet'].accept(AvroSerializer())
-        self.assertEqual(len(v['fields']), 6)
-        print(json.dumps(v, indent=2))
+        Pet = specification.definitions['Pet'].accept(TypeVisitor())['type']
+        self.assertEqual(len(Pet['fields']), 6)
+        print(json.dumps(Pet, indent=2))
