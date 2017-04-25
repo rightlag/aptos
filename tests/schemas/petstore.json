@@ -660,6 +660,7 @@
   "definitions": {
     "Order": {
       "type": "object",
+      "title": "Order",
       "properties": {
         "id": {
           "type": "integer",
@@ -693,6 +694,7 @@
     },
     "Category": {
       "type": "object",
+      "title": "Category",
       "properties": {
         "id": {
           "type": "integer",
@@ -708,6 +710,7 @@
     },
     "User": {
       "type": "object",
+      "title": "User",
       "properties": {
         "id": {
           "type": "integer",
@@ -743,6 +746,7 @@
     },
     "Tag": {
       "type": "object",
+      "title": "Tag",
       "properties": {
         "id": {
           "type": "integer",
@@ -758,6 +762,7 @@
     },
     "Pet": {
       "type": "object",
+      "title": "Pet",
       "required": ["name", "photoUrls"],
       "properties": {
         "id": {
@@ -803,6 +808,7 @@
     },
     "ApiResponse": {
       "type": "object",
+      "title": "ApiResponse",
       "properties": {
         "code": {
           "type": "integer",
