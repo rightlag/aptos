@@ -1,4 +1,4 @@
-from .primitives import TypeFactory
+from .primitives import TypeRegistry
 
 
 class Swagger:
@@ -12,9 +12,7 @@ class Swagger:
         self.consumes = [] if consumes is None else list(consumes)
         self.produces = [] if produces is None else list(produces)
         self.paths = paths
-        if definitions is None:
-            definitions = {}
-        self.definitions = definitions
+        self.definitions = {} if definitions is None else definitions
 
 
 class Operation:
@@ -37,9 +35,9 @@ class Operation:
         self.security = [] if security is None else list(security)
 
     @classmethod
-    def load(cls, instance, referrant=None):
+    def fromJson(cls, instance, referrant=None):
         for status, response in instance['responses'].items():
-            instance['responses'][status] = Response.load(
+            instance['responses'][status] = Response.fromJson(
                 response, referrant=referrant)
         return cls(**instance)
 
@@ -49,17 +47,14 @@ class Response:
     def __init__(self, description='', schema=None, headers=None,
                  examples=None):
         self.description = description
-        if schema is None:
-            schema = {}
-        self.schema = schema
+        self.schema = {} if schema is None else schema
         self.headers = headers
         self.examples = examples
 
     @classmethod
-    def load(cls, instance, referrant):
+    def fromJson(cls, instance, referrant=None):
         if 'schema' in instance:
             schema = instance['schema']
-            schema = TypeFactory.construct_type(
-                schema.get('type'), schema.get('format', '')).load(schema)
+            schema = TypeRegistry.find(schema.get('type')).fromJson(schema)
             instance['schema'] = schema.resolve(referrant)
         return cls(**instance)
