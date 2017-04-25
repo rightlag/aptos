@@ -1,54 +1,38 @@
 import json
-import os
 import unittest
 
-from aptos.primitives import String, Array
-from aptos.util import read
+from aptos import primitives
+from aptos.visitors import TypeVisitor
 
 
 class ValidatorTestCase(unittest.TestCase):
 
     def runTest(self):
-        specification = read(open(os.path.join(
-            os.path.dirname(__file__), 'schemas', 'petstore.json')))
+        Product = primitives.Object(
+            title='Product',
+            description='A product from Acme\'s catalog',
+            type='object',
+            properties={
+                'id': primitives.Integer(
+                    description='The unique identifier for a product',
+                    type='integer'),
+                'name': primitives.String(
+                    description='Name of the product', type='string'),
+                'price': primitives.Number(
+                    type='number', minimum=0, exclusiveMinimum=True),
+                'tags': primitives.Array(
+                    type='array', items=primitives.String(type='string'),
+                    minItems=1, uniqueItems=True),
+            },
+            required=['id', 'name', 'price']
+        )
 
-        # sample HTTP response body
-        instance = b"""
-        {
-          "id": 9072482292156331000,
-          "category": {
-            "id": 0,
-            "name": "string"
-          },
-          "name": "doggie",
-          "tags": [
-            {
-              "id": 0,
-              "name": "string"
-            }
-          ],
-          "status": "available"
+        instance = {
+            "id": 1,
+            "name": "A green door",
+            "price": 12.50,
+            "tags": ["home", "green"]
         }
-        """
 
-        with self.assertRaises(AssertionError):
-            # missing 'photoUrls'
-            specification.definitions['Pet'](
-                json.loads(instance.decode('utf-8')))
-
-        s = String(maxLength=5)
-        with self.assertRaises(AssertionError):
-            s('hello, world!')  # fails validation
-
-        arr = Array(items=String(), maxItems=3)  # array of type 'String'
-        with self.assertRaises(AssertionError):
-            arr(['a', 'b', 'c', 'd'])
-
-        # further validation of children items
-        arr = Array(items=String(maxLength=1))
-        with self.assertRaises(AssertionError):
-            arr(['ab'])
-
-        arr = Array(items=String(), uniqueItems=True)
-        with self.assertRaises(AssertionError):
-            arr(['d', 'e', 'g', 'g'])  # duplicate items in array
+        Product(instance)
+        print(json.dumps(Product.accept(TypeVisitor())['type'], indent=2))
