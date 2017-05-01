@@ -4,7 +4,12 @@ from aptos import __version__
 
 setup(
     name='aptos',
-    author='Jason Walsh',
     version=__version__,
-    url='https://github.com/pennsignals/aptos'
+    author='Jason Walsh',
+    maintainer='Jason Walsh',
+    url='https://github.com/pennsignals/aptos',
+    classifiers=[
+        'Development Status :: 3 - Alpha',
+    ],
+    license='License :: OSI Approved :: MIT License'
 )
