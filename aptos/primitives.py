@@ -77,11 +77,14 @@ class Primitive:
         return self
 
     def accept(self, visitor):
+        if self.enum:
+            return visitor.visitEnum(self)
+
         return {
             Array: visitor.visitArray,
             Boolean: visitor.visitBoolean,
             Integer: visitor.visitInt,
-            Number: visitor.visitLong,
+            Number: visitor.visitFloat,
             Null: visitor.visitNull,
             Object: visitor.visitDeclared,
             String: visitor.visitString,
@@ -244,12 +247,6 @@ class Object(Primitive):
                 member, referrant=referrant)
             instance.properties[name] = member.resolve(referrant=referrant)
         return instance
-
-    class Builder:
-
-        @classmethod
-        def fromFields(cls, fields):
-            return cls
 
     def __call__(self, instance):
         for name, member in instance.items():

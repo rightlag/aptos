@@ -3,6 +3,11 @@ from . import primitives
 
 class RecordVisitor:
 
+    def visitEnum(self, enumeration):
+        return {'type': {
+            'type': 'enum', 'name': enumeration.title,
+            'doc': enumeration.description, 'symbols': enumeration.enum}}
+
     def visitUnion(self, union):
         children = union.type
         for i, child in enumerate(children):
@@ -23,6 +28,9 @@ class RecordVisitor:
 
     def visitLong(self, long):
         return {'type': 'long'}
+
+    def visitFloat(self, float):
+        return {'type': 'float'}
 
     def visitNull(self, null):
         return {'type': 'null'}
