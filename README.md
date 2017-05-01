@@ -11,10 +11,10 @@
 import json
 
 from aptos.util import parse
-from aptos.visitors import TypeVisitor
+from aptos.visitors import RecordVisitor
 
 specification = parse(open('/path/to/schema'))
-print(json.dumps(specification.definitions['Pet'].accept(TypeVisitor())['type'], indent=2))
+print(json.dumps(specification.definitions['Pet'].accept(RecordVisitor()), indent=2))
 ```
 
 ```json

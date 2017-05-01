@@ -1,4 +1,7 @@
-class TypeVisitor:
+from . import primitives
+
+
+class RecordVisitor:
 
     def visitUnion(self, union):
         children = union.type
@@ -9,8 +12,8 @@ class TypeVisitor:
     def visitArray(self, array):
         items = array.items.accept(self)
         if 'fields' not in items:
-            items = items.get('type')
-        return {'type': {'type': 'array', 'items': items}}
+            items = items['type']
+        return {'type': 'array', 'items': items}
 
     def visitBoolean(self, boolean):
         return {'type': 'boolean'}
@@ -28,11 +31,13 @@ class TypeVisitor:
         fields = []
         for name, member in declared.properties.items():
             field = member.accept(self)
+            if isinstance(member, (primitives.Object, primitives.Array)):
+                field = {'type': field}
             field.update({'name': name, 'doc': member.description})
             fields.append(field)
-        return {'type': {
+        return {
             'type': 'record', 'namespace': __name__, 'name': declared.title,
-            'doc': declared.description, 'fields': fields}}
+            'doc': declared.description, 'fields': fields}
 
     def visitString(self, string):
         return {'type': 'string'}

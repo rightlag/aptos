@@ -2,13 +2,13 @@ import json
 import unittest
 
 from aptos import primitives
-from aptos.visitors import TypeVisitor
+from aptos.visitors import RecordVisitor
 
 
 class ValidatorTestCase(unittest.TestCase):
 
     def runTest(self):
-        Product = primitives.Object(
+        product = primitives.Object(
             title='Product',
             description='A product from Acme\'s catalog',
             type='object',
@@ -34,5 +34,6 @@ class ValidatorTestCase(unittest.TestCase):
             "tags": ["home", "green"]
         }
 
-        Product(instance)
-        print(json.dumps(Product.accept(TypeVisitor())['type'], indent=2))
+        product(instance)
+        record = product.accept(RecordVisitor())
+        print(json.dumps(record, indent=2))
