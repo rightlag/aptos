@@ -6,7 +6,8 @@ class JSONSchema:
 
 class EntityMapperTranslator:
 
-    def __call__(self, instance):
+    @staticmethod
+    def translate(self, instance):
         return {
             dict: Object,
             list: Array,
@@ -313,7 +314,7 @@ class Union:
         return self
 
     def __call__(self, instance):
-        cls = EntityMapperTranslator()(instance)
+        cls = EntityMapperTranslator.translate(instance)
         index = [type.__class__ for type in self.type].index(cls)
         return self.type[index](instance)
 
