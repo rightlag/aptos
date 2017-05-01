@@ -54,7 +54,7 @@ class Primitive:
         self.allOf = [] if allOf is None else list(allOf)
         self.anyOf = [] if anyOf is None else list(anyOf)
         self.oneOf = [] if oneOf is None else list(oneOf)
-        self.definitions = {} if definitions is None else definitions
+        self.definitions = {} if definitions is None else dict(definitions)
 
         # Metadata keywords
         self.title = title
@@ -143,9 +143,6 @@ class Boolean(Primitive):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def __call__(self, instance):
-        return super().__call__(instance)
-
 
 class Integer(Primitive):
     """A JSON number without a fraction or exponent part."""
@@ -216,9 +213,6 @@ class Null(Primitive):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-
-    def __call__(self, instance):
-        return super().__call__(instance)
 
 
 class Object(Primitive):
