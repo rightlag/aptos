@@ -48,10 +48,7 @@ class Primitive:
                  default=None, **kwargs):
         # TODO: include `not`
         self.enum = [] if enum is None else list(set(enum))
-        children = [type] if isinstance(type, str) else list(set(type))
-        assert all([child.lower() in JSONSchema.types for child in children]), (  # noqa: E501
-            'got an unexpected keyword argument %r' % children.pop())
-        self.type = children if len(children) > 1 else children.pop()
+        self.type = type
         self.allOf = [] if allOf is None else list(allOf)
         self.anyOf = [] if anyOf is None else list(anyOf)
         self.oneOf = [] if oneOf is None else list(oneOf)
@@ -64,6 +61,10 @@ class Primitive:
 
     @classmethod
     def fromJson(cls, instance, referrant=None):
+        if 'definitions' in instance:
+            for name, definition in instance['definitions'].items():
+                instance['definitions'][name] = Object.fromJson(
+                    definition, referrant=referrant)
         if 'allOf' in instance:
             properties = {}
             for schema in instance.get('allOf', []):
@@ -108,6 +109,8 @@ class Array(Primitive):
     def __init__(self, additionalItems=None, items=None, maxItems=0,
                  minItems=0, uniqueItems=False, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'array'
+
         self.additionalItems = additionalItems
         self.items = items
         self.maxItems = maxItems
@@ -146,6 +149,7 @@ class Boolean(Primitive):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'boolean'
 
 
 class Integer(Primitive):
@@ -157,6 +161,8 @@ class Integer(Primitive):
     def __init__(self, multipleOf=0, maximum=0, exclusiveMaximum=False,
                  minimum=0, exclusiveMinimum=False, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'integer'
+
         self.multipleOf = multipleOf
         self.maximum = maximum
         self.exclusiveMaximum = exclusiveMaximum
@@ -188,6 +194,8 @@ class Number(Primitive):
     def __init__(self, multipleOf=0, maximum=0, exclusiveMaximum=False,
                  minimum=0, exclusiveMinimum=False, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'number'
+
         self.multipleOf = multipleOf
         self.maximum = maximum
         self.exclusiveMaximum = exclusiveMaximum
@@ -217,6 +225,7 @@ class Null(Primitive):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'null'
 
 
 class Object(Primitive):
@@ -230,6 +239,8 @@ class Object(Primitive):
                  additionalProperties=None, properties=None,
                  patternProperties=None, dependencies=None, **kwargs):
         super().__init__(**kwargs)
+        self.type = 'object'
+
         self.maxProperties = maxProperties
         self.minProperties = minProperties
         self.required = [] if required is None else list(set(required))
@@ -267,6 +278,8 @@ class String(Primitive):
 
     def __init__(self, maxLength=0, minLength=0, pattern='', **kwargs):
         super().__init__(**kwargs)
+        self.type = 'string'
+
         self.maxLength = maxLength
         self.minLength = minLength
         self.pattern = pattern
