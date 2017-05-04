@@ -7,7 +7,7 @@ class JSONSchema:
 class EntityMapperTranslator:
 
     @staticmethod
-    def translate(self, instance):
+    def translate(instance):
         return {
             dict: Object,
             list: Array,
