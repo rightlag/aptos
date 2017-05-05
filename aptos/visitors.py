@@ -9,7 +9,7 @@ class RecordVisitor:
             'doc': enumeration.description, 'symbols': enumeration.enum}}
 
     def visitUnion(self, union):
-        children = union.type
+        children = list(union.type)
         for i, child in enumerate(children):
             children[i] = child.accept(self)['type']
         return {'type': children}
