@@ -75,13 +75,17 @@ class ResolveVisitor(Visitor):
     def visitInt(self, integer):
         return integer
 
+    def visitLong(self, long):
+        return long
+
     def visitString(self, string):
         return string
 
     def visitUnknown(self, unknown):
         value = unknown.value.split('/')[-1]
         instance = self.context['definitions'][value]
-        return Creator.create(instance.get('type')).fromJson(instance)
+        return primitives.Creator.create(
+            instance.get('type')).fromJson(instance)
 
     def visitDeclared(self, declared):
         for i, item in enumerate(declared.allOf.items):
