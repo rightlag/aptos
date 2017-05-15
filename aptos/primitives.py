@@ -1,12 +1,6 @@
 from copy import deepcopy
 
 
-class JSONSchema:
-
-    types = (
-        'array', 'boolean', 'integer', 'number', 'null', 'object', 'string',)
-
-
 class EntityMapperTranslator:
 
     @staticmethod
