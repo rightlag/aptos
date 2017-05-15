@@ -163,6 +163,9 @@ class Array(Primitive):
         }[items.__class__](items)
         return instance
 
+    def accept(self, visitor):
+        return visitor.visitArray(self)
+
     def __call__(self, instance):
         for child in instance:
             self.items(child)
@@ -184,6 +187,9 @@ class Boolean(Primitive):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
+    def accept(self, visitor):
+        return visitor.visitBoolean(self)
+
 
 class Integer(Primitive):
     """A JSON number without a fraction or exponent part."""
@@ -199,6 +205,9 @@ class Integer(Primitive):
         self.exclusiveMaximum = exclusiveMaximum
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
+
+    def accept(self, visitor):
+        return visitor.visitInt(self)
 
     def __call__(self, instance):
         if self.multipleOf:
@@ -231,6 +240,9 @@ class Number(Primitive):
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
 
+    def accept(self, visitor):
+        return visitor.visitLong(self)
+
     def __call__(self, instance):
         if self.multipleOf:
             assert isinstance((instance / self.multipleOf), int)
@@ -254,6 +266,9 @@ class Null(Primitive):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+    def accept(self, visitor):
+        return visitor.visitNull(self)
 
 
 class Record(Primitive):
@@ -286,6 +301,9 @@ class Record(Primitive):
         instance.properties = Properties.fromJson(instance.properties)
         return instance
 
+    def accept(self, visitor):
+        return visitor.visitDeclared(self)
+
     def __call__(self, instance):
         for name, member in instance.items():
             self.properties[name](member)
@@ -307,6 +325,9 @@ class String(Primitive):
         self.maxLength = maxLength
         self.minLength = minLength
         self.pattern = pattern
+
+    def accept(self, visitor):
+        return visitor.visitString(self)
 
     def __call__(self, instance):
         import re
@@ -363,6 +384,9 @@ class Reference(Primitive):
         if re.match(expression, value) is None:
             raise ValueError()
         self.value = value
+
+    def accept(self, visitor):
+        return visitor.visitUnknown(self)
 
 
 class Unknown:
