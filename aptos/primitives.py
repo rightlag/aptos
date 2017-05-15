@@ -45,15 +45,17 @@ class Component:
         raise NotImplementedError()
 
 
-class Primitive:
+class Primitive(Component):
 
-    keywords = ('enum', 'type', 'allOf', 'anyOf', 'oneOf', 'definitions',)
+    keywords = ('enum', 'const', 'type', 'allOf', 'anyOf', 'oneOf',)
 
-    def __init__(self, enum=None, type=None, allOf=None, anyOf=None,
-                 oneOf=None, definitions=None, title='', description='',
-                 default=None, **kwargs):
+    def __init__(self, enum=None, const=None, type=None, allOf=None,
+                 anyOf=None, oneOf=None, definitions=None, title='',
+                 description='', default=None, examples=None, format='',
+                 **kwargs):
         # TODO: include `not`
         self.enum = [] if enum is None else list(set(enum))
+        self.const = const
         self.type = type
         self.allOf = [] if allOf is None else list(allOf)
         self.anyOf = [] if anyOf is None else list(anyOf)
@@ -64,6 +66,8 @@ class Primitive:
         self.title = title
         self.description = description
         self.default = default
+        self.examples = examples
+        self.format = format
 
     @classmethod
     def fromJson(cls, instance, referrant=None):
