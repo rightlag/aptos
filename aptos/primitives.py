@@ -9,7 +9,7 @@ class EntityMapperTranslator:
     @staticmethod
     def translate(instance):
         return {
-            dict: Object,
+            dict: Record,
             list: Array,
             tuple: Array,
             str: String,
@@ -20,23 +20,23 @@ class EntityMapperTranslator:
         }[instance.__class__]
 
 
-class TypeRegistry:
+class Creator:
 
     @staticmethod
-    def find(type):
-        if isinstance(type, list):
-            return Union
-
+    def create(identifier):
         return {
-            'object': Object,
-            'array': Array,
-            'string': String,
-            'integer': Integer,
-            'number': Number,
-            'boolean': Boolean,
-            'null': Null,
-            None: Reference,
-        }[type]
+            str: lambda identifier: {
+                'array': Array,
+                'boolean': Boolean,
+                'integer': Integer,
+                'object': Record,
+                'string': String,
+                'number': Number,
+                'null': Null,
+            }.get(identifier, Record),
+            list: lambda identifier: Union,
+            type(None): lambda identifier: Unknown,
+        }[identifier.__class__](identifier)
 
 
 class Component:
@@ -73,12 +73,12 @@ class Primitive(Component):
     def fromJson(cls, instance, referrant=None):
         if 'definitions' in instance:
             for name, definition in instance['definitions'].items():
-                instance['definitions'][name] = Object.fromJson(
+                instance['definitions'][name] = Record.fromJson(
                     definition, referrant=referrant)
         if 'allOf' in instance:
             properties = {}
             for schema in instance.get('allOf', []):
-                schema = TypeRegistry.find(schema.get('type')).fromJson(
+                schema = Creator.create(schema.get('type')).fromJson(
                     schema, referrant=referrant)
                 schema = schema.resolve(referrant=referrant)
                 properties.update(schema.properties)
@@ -98,7 +98,7 @@ class Primitive(Component):
             Integer: visitor.visitInt,
             Number: visitor.visitFloat,
             Null: visitor.visitNull,
-            Object: visitor.visitDeclared,
+            Record: visitor.visitDeclared,
             String: visitor.visitString,
         }[self.__class__](self)
 
@@ -129,7 +129,7 @@ class Array(Primitive):
     def fromJson(cls, instance, referrant=None):
         instance = super().fromJson(instance, referrant=referrant)
         items = instance.items
-        instance.items = TypeRegistry.find(items.get('type')).fromJson(
+        instance.items = Creator.create(items.get('type')).fromJson(
             items, referrant=referrant)
         return instance
 
@@ -230,7 +230,7 @@ class Null(Primitive):
         super().__init__(**kwargs)
 
 
-class Object(Primitive):
+class Record(Primitive):
     """A JSON object."""
 
     keywords = ('maxProperties', 'minProperties', 'required',
@@ -255,7 +255,7 @@ class Object(Primitive):
         for name, member in instance.properties.items():
             if isinstance(member, (Primitive, Union)):
                 continue
-            member = TypeRegistry.find(member.get('type')).fromJson(
+            member = Creator.create(member.get('type')).fromJson(
                 member, referrant=referrant)
             instance.properties[name] = member.resolve(referrant=referrant)
         return instance
@@ -309,7 +309,7 @@ class Union:
         for i, type in enumerate(types):
             if isinstance(type, Primitive):
                 continue
-            type = TypeRegistry.find(type)
+            type = Creator.create(type)
             keywords = {}
             for keyword in instance:
                 if keyword in type.keywords:
@@ -342,6 +342,6 @@ class Reference:
     def resolve(self, referrant=None):
         value = referrant['definitions'][self.value.split('/')[-1]]
         if not isinstance(value, Primitive):
-            cls = TypeRegistry.find(value.get('type'))
+            cls = Creator.create(value.get('type'))
             value = cls.fromJson(value, referrant=referrant)
         return value
