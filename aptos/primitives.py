@@ -85,9 +85,6 @@ class Primitive(Component):
             instance['properties'] = properties
         return cls(**instance)
 
-    def resolve(self, referrant=None):
-        return self
-
     def accept(self, visitor):
         if self.enum:
             return visitor.visitEnum(self)
@@ -132,10 +129,6 @@ class Array(Primitive):
         instance.items = Creator.create(items.get('type')).fromJson(
             items, referrant=referrant)
         return instance
-
-    def resolve(self, referrant=None):
-        self.items = self.items.resolve(referrant=referrant)
-        return self
 
     def __call__(self, instance):
         for child in instance:
@@ -321,9 +314,6 @@ class Union:
     def accept(self, visitor):
         return visitor.visitUnion(self)
 
-    def resolve(self, referrant=None):
-        return self
-
     def __call__(self, instance):
         cls = EntityMapperTranslator.translate(instance)
         index = [type.__class__ for type in self.type].index(cls)
@@ -338,10 +328,3 @@ class Reference:
     @classmethod
     def fromJson(cls, instance, referrant=None):
         return cls(**instance)
-
-    def resolve(self, referrant=None):
-        value = referrant['definitions'][self.value.split('/')[-1]]
-        if not isinstance(value, Primitive):
-            cls = Creator.create(value.get('type'))
-            value = cls.fromJson(value, referrant=referrant)
-        return value
