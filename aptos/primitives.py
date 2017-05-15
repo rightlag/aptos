@@ -340,30 +340,14 @@ class String(Primitive):
         return super().__call__(instance)
 
 
-class Union:
-
-    def __init__(self, type=None, title='', description='', default=None):
-        self.type = type
-
-        # Metadata keywords
-        self.title = title
-        self.description = description
-        self.default = default
+class Union(Primitive):
 
     @classmethod
-    def fromJson(cls, instance, referrant=None):
-        types = instance.get('type', [])
-        for i, type in enumerate(types):
-            if isinstance(type, Primitive):
-                continue
-            type = Creator.create(type)
-            keywords = {}
-            for keyword in instance:
-                if keyword in type.keywords:
-                    keywords[keyword] = instance[keyword]
-            keywords['type'] = type.__name__
-            types[i] = type.fromJson(keywords, referrant=referrant)
-        return cls(type=types)
+    def fromJson(cls, instance):
+        instance['type'] = list(
+            Creator.create(identifier).fromJson(instance)
+            for identifier in instance['type'])
+        return super().fromJson(instance)
 
     def accept(self, visitor):
         return visitor.visitUnion(self)
