@@ -116,6 +116,20 @@ class Definitions(Component, dict):
             self[name] = member.accept(visitor)
 
 
+class Properties(Component, dict):
+
+    @classmethod
+    def fromJson(cls, instance):
+        for name, member in instance.items():
+            member = Creator.create(member.get('type')).fromJson(member)
+            instance[name] = member
+        return cls(instance)
+
+    def accept(self, visitor):
+        for name, member in self.items():
+            self[name] = member.accept(visitor)
+
+
 class Array(Primitive):
     """A JSON array."""
 
@@ -253,29 +267,29 @@ class Record(Primitive):
 
     keywords = ('maxProperties', 'minProperties', 'required',
                 'additionalProperties', 'properties', 'patternProperties',
-                'dependencies',)
+                'dependencies', 'propertyNames',)
 
     def __init__(self, maxProperties=0, minProperties=0, required=None,
-                 additionalProperties=None, properties=None,
-                 patternProperties=None, dependencies=None, **kwargs):
+                 properties=None, patternProperties=None,
+                 additionalProperties=None, dependencies=None,
+                 propertyNames=None, **kwargs):
         super().__init__(**kwargs)
         self.maxProperties = maxProperties
         self.minProperties = minProperties
         self.required = [] if required is None else list(set(required))
-        self.additionalProperties = additionalProperties
         self.properties = {} if properties is None else dict(properties)
-        self.patternProperties = patternProperties
+        self.patternProperties = (
+            {} if patternProperties is None else dict(patternProperties))
+        self.additionalProperties = (
+            {} if additionalProperties is None else dict(additionalProperties))
         self.dependencies = dependencies
+        self.propertyNames = (
+            {} if propertyNames is None else dict(propertyNames))
 
     @classmethod
-    def fromJson(cls, instance, referrant=None):
-        instance = super().fromJson(instance, referrant=referrant)
-        for name, member in instance.properties.items():
-            if isinstance(member, (Primitive, Union)):
-                continue
-            member = Creator.create(member.get('type')).fromJson(
-                member, referrant=referrant)
-            instance.properties[name] = member.resolve(referrant=referrant)
+    def fromJson(cls, instance):
+        instance = super().fromJson(instance)
+        instance.properties = Properties.fromJson(instance.properties)
         return instance
 
     def __call__(self, instance):
