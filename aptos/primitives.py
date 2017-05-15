@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+
 class JSONSchema:
 
     types = (
@@ -70,19 +73,11 @@ class Primitive(Component):
         self.format = format
 
     @classmethod
-    def fromJson(cls, instance, referrant=None):
-        if 'definitions' in instance:
-            for name, definition in instance['definitions'].items():
-                instance['definitions'][name] = Record.fromJson(
-                    definition, referrant=referrant)
-        if 'allOf' in instance:
-            properties = {}
-            for schema in instance.get('allOf', []):
-                schema = Creator.create(schema.get('type')).fromJson(
-                    schema, referrant=referrant)
-                schema = schema.resolve(referrant=referrant)
-                properties.update(schema.properties)
-            instance['properties'] = properties
+    def fromJson(cls, instance):
+        instance = deepcopy(instance)
+        instance['allOf'] = AllOf.fromJson(instance.get('allOf', []))
+        instance['definitions'] = Definitions.fromJson(
+            instance.get('definitions', {}))
         return cls(**instance)
 
     def __call__(self, instance):
@@ -91,6 +86,34 @@ class Primitive(Component):
         # TODO: validation for `type`, `allOf`, `anyOf`, `oneOf`, and
         # `definitions`
         return self
+
+
+class AllOf(Array):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.minItems = 1
+
+    @classmethod
+    def fromJson(cls, instance):
+        items = list(
+            Creator.create(identifier.get('type')).fromJson(identifier)
+            for identifier in instance)
+        return cls(items=items)
+
+
+class Definitions(Component, dict):
+
+    @classmethod
+    def fromJson(cls, instance):
+        for name, member in instance.items():
+            member = Creator.create(member.get('type')).fromJson(member)
+            instance[name] = member
+        return cls(instance)
+
+    def accept(self, visitor):
+        for name, member in self.items():
+            self[name] = member.accept(visitor)
 
 
 class Array(Primitive):
