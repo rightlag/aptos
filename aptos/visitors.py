@@ -49,3 +49,43 @@ class RecordVisitor:
 
     def visitString(self, string):
         return {'type': 'string'}
+
+
+class Visitor:
+
+    def visit(self, primitive):
+        primitive = primitive.accept(self)
+        for i, item in enumerate(primitive.allOf.items):
+            primitive.allOf.items[i] = item.accept(self)
+        return primitive
+
+
+class ResolveVisitor(Visitor):
+
+    def __init__(self, context):
+        self.context = context
+
+    def visitUnion(self, union):
+        return union
+
+    def visitArray(self, array):
+        array.items = array.items.accept(self)
+        return array
+
+    def visitInt(self, integer):
+        return integer
+
+    def visitString(self, string):
+        return string
+
+    def visitUnknown(self, unknown):
+        value = unknown.value.split('/')[-1]
+        instance = self.context['definitions'][value]
+        return Creator.create(instance.get('type')).fromJson(instance)
+
+    def visitDeclared(self, declared):
+        for i, item in enumerate(declared.allOf.items):
+            declared.allOf.items[i] = super().visit(item)
+        declared.properties.accept(self)
+        declared.definitions.accept(self)
+        return declared
