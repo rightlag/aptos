@@ -54,10 +54,10 @@ class Primitive(Component):
         self.enum = [] if enum is None else list(set(enum))
         self.const = const
         self.type = type
-        self.allOf = [] if allOf is None else list(allOf)
-        self.anyOf = [] if anyOf is None else list(anyOf)
-        self.oneOf = [] if oneOf is None else list(oneOf)
-        self.definitions = {} if definitions is None else dict(definitions)
+        self.allOf = [] if allOf is None else allOf
+        self.anyOf = [] if anyOf is None else anyOf
+        self.oneOf = [] if oneOf is None else oneOf
+        self.definitions = {} if definitions is None else definitions
 
         # Metadata keywords
         self.title = title
@@ -80,20 +80,6 @@ class Primitive(Component):
         # TODO: validation for `type`, `allOf`, `anyOf`, `oneOf`, and
         # `definitions`
         return self
-
-
-class AllOf(Array):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.minItems = 1
-
-    @classmethod
-    def fromJson(cls, instance):
-        items = list(
-            Creator.create(identifier.get('type')).fromJson(identifier)
-            for identifier in instance)
-        return cls(items=items)
 
 
 class Definitions(Component, dict):
@@ -177,6 +163,20 @@ class Array(Primitive):
         if self.uniqueItems:
             assert len(list(set(instance))) == len(instance)
         return super().__call__(instance)
+
+
+class AllOf(Array):
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.minItems = 1
+
+    @classmethod
+    def fromJson(cls, instance):
+        items = list(
+            Creator.create(identifier.get('type')).fromJson(identifier)
+            for identifier in instance)
+        return cls(items=items)
 
 
 class Boolean(Primitive):
