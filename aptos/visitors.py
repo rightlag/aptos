@@ -37,7 +37,7 @@ class RecordVisitor:
         fields = []
         for name, member in declared.properties.items():
             field = member.accept(self)
-            if isinstance(member, (primitives.Object, primitives.Array)):
+            if isinstance(member, (primitives.Record, primitives.Array)):
                 field = {'type': field}
             field.update({'name': name, 'doc': member.description})
             fields.append(field)
