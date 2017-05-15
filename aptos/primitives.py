@@ -85,20 +85,6 @@ class Primitive(Component):
             instance['properties'] = properties
         return cls(**instance)
 
-    def accept(self, visitor):
-        if self.enum:
-            return visitor.visitEnum(self)
-
-        return {
-            Array: visitor.visitArray,
-            Boolean: visitor.visitBoolean,
-            Integer: visitor.visitInt,
-            Number: visitor.visitFloat,
-            Null: visitor.visitNull,
-            Record: visitor.visitDeclared,
-            String: visitor.visitString,
-        }[self.__class__](self)
-
     def __call__(self, instance):
         if self.enum:
             assert instance in self.enum
