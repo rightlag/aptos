@@ -373,6 +373,12 @@ class Reference(Primitive):
         return visitor.visitUnknown(self)
 
 
+class Enumerated(Primitive):
+
+    def accept(self, visitor):
+        return visitor.visitEnum(self)
+
+
 class Unknown:
 
     @classmethod
