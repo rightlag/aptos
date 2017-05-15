@@ -93,3 +93,6 @@ class ResolveVisitor(Visitor):
         declared.properties.accept(self)
         declared.definitions.accept(self)
         return declared
+
+    def visitEnum(self, enumeration):
+        return enumeration
