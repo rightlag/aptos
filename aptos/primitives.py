@@ -364,7 +364,7 @@ class Reference(Primitive):
         import re
 
         value = kwargs['$ref']
-        expression = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
+        expression = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'  # noqa: E501
         if re.match(expression, value) is None:
             raise ValueError()
         self.value = value
@@ -383,6 +383,6 @@ class Unknown:
 
     @classmethod
     def fromJson(cls, instance):
-        return (Reference.fromJson(instance)
-            if '$ref' in instance
-            else Enumerated.fromJson(instance))
+        return (
+            Reference.fromJson(instance)
+            if '$ref' in instance else Enumerated.fromJson(instance))
