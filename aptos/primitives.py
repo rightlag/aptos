@@ -39,6 +39,12 @@ class TypeRegistry:
         }[type]
 
 
+class Component:
+
+    def accept(self, visitor):
+        raise NotImplementedError()
+
+
 class Primitive:
 
     keywords = ('enum', 'type', 'allOf', 'anyOf', 'oneOf', 'definitions',)
