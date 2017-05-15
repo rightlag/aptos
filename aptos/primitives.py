@@ -367,3 +367,12 @@ class Reference:
     @classmethod
     def fromJson(cls, instance, referrant=None):
         return cls(**instance)
+
+
+class Unknown:
+
+    @classmethod
+    def fromJson(cls, instance):
+        return (Reference.fromJson(instance)
+            if '$ref' in instance
+            else Enumerated.fromJson(instance))
