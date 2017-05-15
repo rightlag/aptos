@@ -122,21 +122,37 @@ class Array(Primitive):
     keywords = ('additionalItems', 'items', 'maxItems', 'minItems',
                 'uniqueItems',)
 
+    class List:
+
+        @classmethod
+        def fromJson(cls, instance):
+            return Creator.create(instance.get('type')).fromJson(instance)
+
+    class Tuple:
+
+        @classmethod
+        def fromJson(cls, instance):
+            pass
+
     def __init__(self, additionalItems=None, items=None, maxItems=0,
-                 minItems=0, uniqueItems=False, **kwargs):
+                 minItems=0, uniqueItems=False, contains=None, **kwargs):
         super().__init__(**kwargs)
-        self.additionalItems = additionalItems
-        self.items = items
+        self.additionalItems = (
+            {} if additionalItems is None else additionalItems)
+        self.items = {} if items is None else items
         self.maxItems = maxItems
         self.minItems = minItems
         self.uniqueItems = uniqueItems
+        self.contains = {} if contains is None else contains
 
     @classmethod
-    def fromJson(cls, instance, referrant=None):
-        instance = super().fromJson(instance, referrant=referrant)
+    def fromJson(cls, instance):
+        instance = super().fromJson(instance)
         items = instance.items
-        instance.items = Creator.create(items.get('type')).fromJson(
-            items, referrant=referrant)
+        instance.items = {
+            dict: Array.List.fromJson,
+            list: Array.Tuple.fromJson,
+        }[items.__class__](items)
         return instance
 
     def __call__(self, instance):
