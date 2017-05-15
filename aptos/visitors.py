@@ -43,6 +43,8 @@ class RecordVisitor:
                 field = {'type': field}
             field.update({'name': name, 'doc': member.description})
             fields.append(field)
+        for item in declared.allOf.items:
+            fields.extend(item.accept(self)['fields'])
         return {
             'type': 'record', 'namespace': __name__, 'name': declared.title,
             'doc': declared.description, 'fields': fields}
