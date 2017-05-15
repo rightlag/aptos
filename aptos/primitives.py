@@ -353,14 +353,16 @@ class Union:
         return self.type[index](instance)
 
 
-class Reference:
+class Reference(Primitive):
 
     def __init__(self, **kwargs):
-        self.value = kwargs.get('$ref', '')
+        import re
 
-    @classmethod
-    def fromJson(cls, instance, referrant=None):
-        return cls(**instance)
+        value = kwargs['$ref']
+        expression = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'
+        if re.match(expression, value) is None:
+            raise ValueError()
+        self.value = value
 
 
 class Unknown:
