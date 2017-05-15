@@ -213,15 +213,17 @@ class Integer(Primitive):
         if self.multipleOf:
             assert isinstance((instance / self.multipleOf), int)
         if self.exclusiveMaximum:
-            if self.maximum:
+            if self.maximum is not None:
                 assert instance < self.maximum
         else:
-            if self.maximum:
+            if self.maximum is not None:
                 assert instance <= self.maximum
         if self.exclusiveMinimum:
-            assert instance > self.minimum
+            if self.minimum is not None:
+                assert instance > self.minimum
         else:
-            assert instance >= self.minimum
+            if self.minimum is not None:
+                assert instance >= self.minimum
         return super().__call__(instance)
 
 
@@ -231,8 +233,8 @@ class Number(Primitive):
     keywords = ('multipleOf', 'maximum', 'exclusiveMaximum', 'minimum',
                 'exclusiveMinimum',)
 
-    def __init__(self, multipleOf=0, maximum=0, exclusiveMaximum=False,
-                 minimum=0, exclusiveMinimum=False, **kwargs):
+    def __init__(self, multipleOf=0, maximum=None, exclusiveMaximum=False,
+                 minimum=None, exclusiveMinimum=False, **kwargs):
         super().__init__(**kwargs)
         self.multipleOf = multipleOf
         self.maximum = maximum
@@ -247,15 +249,17 @@ class Number(Primitive):
         if self.multipleOf:
             assert isinstance((instance / self.multipleOf), int)
         if self.exclusiveMaximum:
-            if self.maximum:
+            if self.maximum is not None:
                 assert instance < self.maximum
         else:
-            if self.maximum:
+            if self.maximum is not None:
                 assert instance <= self.maximum
         if self.exclusiveMinimum:
-            assert instance > self.minimum
+            if self.minimum is not None:
+                assert instance > self.minimum
         else:
-            assert instance >= self.minimum
+            if self.minimum is not None:
+                assert instance >= self.minimum
         return super().__call__(instance)
 
 
