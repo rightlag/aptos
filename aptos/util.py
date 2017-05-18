@@ -1,7 +1,7 @@
 import json
 
 from .primitives import Record
-from .visitors import ResolveVisitor
+from .visitors import TypeVisitor
 
 
 class Parser:
@@ -11,5 +11,5 @@ class Parser:
         with open(filename) as fp:
             instance = json.load(fp)
         record = Record.fromJson(instance)
-        record.accept(ResolveVisitor(instance))
+        record.accept(TypeVisitor(instance))
         return record
