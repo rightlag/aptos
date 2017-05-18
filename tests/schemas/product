@@ -19,7 +19,7 @@
             "type": "number"
         },
         "name": {
-            "type": ["string", "null"]
+            "type": "string"
         },
         "price": {
             "type": "number",
@@ -50,4 +50,3 @@
     },
     "required": ["id", "name", "price"]
 }
-
