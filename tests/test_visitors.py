@@ -3,12 +3,13 @@ import os
 import unittest
 
 from aptos.util import Parser
-from aptos.visitors import RecordVisitor
+from aptos.visitors import RecordVisitor, ValidationVisitor
 
 
 class VisitorTestCase(unittest.TestCase):
 
     def runTest(self):
+        records = {}
         record = Parser.parse(
             os.path.join(os.path.dirname(__file__), 'schemas', 'product'))
         instance = json.loads('''
@@ -28,7 +29,21 @@ class VisitorTestCase(unittest.TestCase):
             }
         }
         ''')
-        record(instance)
+        record.accept(ValidationVisitor(instance))
         schema = record.accept(RecordVisitor())
         self.assertEqual(len(schema['fields']), 6)
-        print(json.dumps(schema, indent=2))
+        records['Product'] = schema
+        record = Parser.parse(
+            os.path.join(os.path.dirname(__file__), 'schemas', 'address'))
+        instance = json.loads('''
+        {
+           "street_address": "1600 Pennsylvania Avenue NW",
+           "city": "Washington",
+           "state": "DC",
+           "type": "residential"
+        }
+        ''')
+        record.accept(ValidationVisitor(instance))
+        schema = record.accept(RecordVisitor())
+        records['Address'] = schema
+        print(json.dumps(records, indent=2))

@@ -4,6 +4,7 @@ import unittest
 
 from aptos.util import Parser
 from aptos.primitives import Array, Record
+from aptos.visitors import ValidationVisitor
 
 
 class LoaderTestCase(unittest.TestCase):
@@ -28,7 +29,7 @@ class LoaderTestCase(unittest.TestCase):
             }
         }
         ''')
-        record(instance)
+        record.accept(ValidationVisitor(instance))
         self.assertEqual(len(record.definitions), 1)
         self.assertIsInstance(record.properties['warehouseLocation'], Record)
         self.assertIsInstance(record.properties['tags'], Array)
