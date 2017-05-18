@@ -1,0 +1,31 @@
+{
+    "definitions": {
+        "address": {
+            "type": "object",
+            "properties": {
+                "street_address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "state": {
+                    "type": "string"
+                }
+            },
+            "required": ["street_address", "city", "state"]
+        }
+    },
+    "allOf": [{
+            "$ref": "#/definitions/address"
+        },
+        {
+            "type": "object",
+            "properties": {
+                "type": {
+                    "enum": ["residential", "business"]
+                }
+            }
+        }
+    ]
+}
