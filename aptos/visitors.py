@@ -93,6 +93,7 @@ class RecordVisitor(Visitor):
         return {
             'type': 'record', 'namespace': __name__, 'name': declared.title,
             'doc': declared.description, 'fields': fields}
+
     def visitString(self, string):
         return {'type': 'string'}
 
