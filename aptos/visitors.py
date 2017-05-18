@@ -6,20 +6,25 @@ from . import primitives
 class Visitor:
 
     def visitPrimitive(self, primitive, *args):
+        if isinstance(primitive, primitives.Reference):
+            return primitive
         primitive.allOf.accept(self, *args)
         primitive.definitions.accept(self, *args)
         return primitive
 
     def visitDefinitions(self, definitions, *args):
         for name, member in definitions.items():
+            member = self.visitPrimitive(member, *args)
             definitions[name] = member.accept(self, *args)
 
     def visitProperties(self, properties, *args):
         for name, member in properties.items():
+            member = self.visitPrimitive(member, *args)
             properties[name] = member.accept(self, *args)
 
     def visitAllOf(self, allOf, *args):
         for i, item in enumerate(allOf.items):
+            item = self.visitPrimitive(item, *args)
             allOf.items[i] = item.accept(self, *args)
 
     def visitUnion(self, union, *args):
