@@ -1,20 +1,6 @@
+import re
+
 from copy import deepcopy
-
-
-class EntityMapperTranslator:
-
-    @staticmethod
-    def translate(instance):
-        return {
-            dict: Record,
-            list: Array,
-            tuple: Array,
-            str: String,
-            int: Integer,
-            float: Number,
-            bool: Boolean,
-            type(None): Null,
-        }[instance.__class__]
 
 
 class Creator:
@@ -38,7 +24,7 @@ class Creator:
 
 class Component:
 
-    def accept(self, visitor):
+    def accept(self, visitor, *args):
         raise NotImplementedError()
 
 
@@ -69,45 +55,41 @@ class Primitive(Component):
     @classmethod
     def fromJson(cls, instance):
         instance = deepcopy(instance)
-        instance['allOf'] = AllOf.fromJson(instance.get('allOf', []))
+        instance['enum'] = instance.get('enum', [])
+        instance['allOf'] = AllOf.fromJson(instance.get('allOf'))
         instance['definitions'] = Definitions.fromJson(
-            instance.get('definitions', {}))
+            instance.get('definitions'))
         return cls(**instance)
-
-    def __call__(self, instance):
-        if self.enum:
-            assert instance in self.enum
-        # TODO: validation for `type`, `allOf`, `anyOf`, `oneOf`, and
-        # `definitions`
-        return self
 
 
 class Definitions(Component, dict):
 
     @classmethod
-    def fromJson(cls, instance):
-        for name, member in instance.items():
+    def fromJson(cls, definitions=None):
+        if definitions is None:
+            definitions = {}
+        for name, member in definitions.items():
             member = Creator.create(member.get('type')).fromJson(member)
-            instance[name] = member
-        return cls(instance)
+            definitions[name] = member
+        return cls(definitions)
 
-    def accept(self, visitor):
-        for name, member in self.items():
-            self[name] = member.accept(visitor)
+    def accept(self, visitor, *args):
+        return visitor.visitDefinitions(self, *args)
 
 
 class Properties(Component, dict):
 
     @classmethod
-    def fromJson(cls, instance):
-        for name, member in instance.items():
+    def fromJson(cls, properties=None):
+        if properties is None:
+            properties = {}
+        for name, member in properties.items():
             member = Creator.create(member.get('type')).fromJson(member)
-            instance[name] = member
-        return cls(instance)
+            properties[name] = member
+        return cls(properties)
 
-    def accept(self, visitor):
-        for name, member in self.items():
-            self[name] = member.accept(visitor)
+    def accept(self, visitor, *args):
+        return visitor.visitProperties(self, *args)
 
 
 class Array(Primitive):
@@ -149,20 +131,8 @@ class Array(Primitive):
         }[items.__class__](items)
         return instance
 
-    def accept(self, visitor):
-        return visitor.visitArray(self)
-
-    def __call__(self, instance):
-        for child in instance:
-            self.items(child)
-        if not self.additionalItems and isinstance(self.items, Array):
-            assert len(instance) <= self.items
-        if self.maxItems:
-            assert len(instance) <= self.maxItems
-        assert len(instance) >= self.minItems
-        if self.uniqueItems:
-            assert len(list(set(instance))) == len(instance)
-        return super().__call__(instance)
+    def accept(self, visitor, *args):
+        return visitor.visitArray(self, *args)
 
 
 class AllOf(Array):
@@ -172,11 +142,15 @@ class AllOf(Array):
         self.minItems = 1
 
     @classmethod
-    def fromJson(cls, instance):
+    def fromJson(cls, items=None):
+        if items is None:
+            items = []
         items = list(
-            Creator.create(identifier.get('type')).fromJson(identifier)
-            for identifier in instance)
+            Creator.create(item.get('type')).fromJson(item) for item in items)
         return cls(items=items)
+
+    def accept(self, visitor, *args):
+        return visitor.visitAllOf(self, *args)
 
 
 class Boolean(Primitive):
@@ -184,11 +158,8 @@ class Boolean(Primitive):
 
     keywords = ()
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def accept(self, visitor):
-        return visitor.visitBoolean(self)
+    def accept(self, visitor, *args):
+        return visitor.visitBoolean(self, *args)
 
 
 class Integer(Primitive):
@@ -206,25 +177,8 @@ class Integer(Primitive):
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
 
-    def accept(self, visitor):
-        return visitor.visitInt(self)
-
-    def __call__(self, instance):
-        if self.multipleOf:
-            assert isinstance((instance / self.multipleOf), int)
-        if self.exclusiveMaximum:
-            if self.maximum is not None:
-                assert instance < self.maximum
-        else:
-            if self.maximum is not None:
-                assert instance <= self.maximum
-        if self.exclusiveMinimum:
-            if self.minimum is not None:
-                assert instance > self.minimum
-        else:
-            if self.minimum is not None:
-                assert instance >= self.minimum
-        return super().__call__(instance)
+    def accept(self, visitor, *args):
+        return visitor.visitInt(self, *args)
 
 
 class Number(Primitive):
@@ -242,25 +196,8 @@ class Number(Primitive):
         self.minimum = minimum
         self.exclusiveMinimum = exclusiveMinimum
 
-    def accept(self, visitor):
-        return visitor.visitLong(self)
-
-    def __call__(self, instance):
-        if self.multipleOf:
-            assert isinstance((instance / self.multipleOf), int)
-        if self.exclusiveMaximum:
-            if self.maximum is not None:
-                assert instance < self.maximum
-        else:
-            if self.maximum is not None:
-                assert instance <= self.maximum
-        if self.exclusiveMinimum:
-            if self.minimum is not None:
-                assert instance > self.minimum
-        else:
-            if self.minimum is not None:
-                assert instance >= self.minimum
-        return super().__call__(instance)
+    def accept(self, visitor, *args):
+        return visitor.visitLong(self, *args)
 
 
 class Null(Primitive):
@@ -268,11 +205,8 @@ class Null(Primitive):
 
     keywords = ()
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def accept(self, visitor):
-        return visitor.visitNull(self)
+    def accept(self, visitor, *args):
+        return visitor.visitNull(self, *args)
 
 
 class Record(Primitive):
@@ -305,18 +239,8 @@ class Record(Primitive):
         instance.properties = Properties.fromJson(instance.properties)
         return instance
 
-    def accept(self, visitor):
-        return visitor.visitDeclared(self)
-
-    def __call__(self, instance):
-        for name, member in instance.items():
-            self.properties[name](member)
-        if self.maxProperties:
-            assert len(instance.keys()) <= self.maxProperties
-        assert len(instance.keys()) >= self.minProperties
-        if self.required:
-            assert len(set(self.required).difference(set(instance))) == 0
-        return super().__call__(instance)
+    def accept(self, visitor, *args):
+        return visitor.visitDeclared(self, *args)
 
 
 class String(Primitive):
@@ -330,18 +254,8 @@ class String(Primitive):
         self.minLength = minLength
         self.pattern = pattern
 
-    def accept(self, visitor):
-        return visitor.visitString(self)
-
-    def __call__(self, instance):
-        import re
-
-        if self.maxLength:
-            assert len(instance) <= self.maxLength
-        assert len(instance) >= self.minLength
-        if self.pattern:
-            assert re.match(self.pattern, instance) is not None
-        return super().__call__(instance)
+    def accept(self, visitor, *args):
+        return visitor.visitString(self, *args)
 
 
 class Union(Primitive):
@@ -353,34 +267,28 @@ class Union(Primitive):
             for identifier in instance['type'])
         return super().fromJson(instance)
 
-    def accept(self, visitor):
-        return visitor.visitUnion(self)
-
-    def __call__(self, instance):
-        cls = EntityMapperTranslator.translate(instance)
-        index = [type.__class__ for type in self.type].index(cls)
-        return self.type[index](instance)
+    def accept(self, visitor, *args):
+        return visitor.visitUnion(self, *args)
 
 
 class Reference(Primitive):
 
     def __init__(self, **kwargs):
-        import re
-
         value = kwargs['$ref']
-        expression = r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?'  # noqa: E501
-        if re.match(expression, value) is None:
+        expression = re.compile(
+            r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?')
+        if expression.match(value) is None:
             raise ValueError()
         self.value = value
 
-    def accept(self, visitor):
-        return visitor.visitUnknown(self)
+    def accept(self, visitor, *args):
+        return visitor.visitUnknown(self, *args)
 
 
 class Enumerated(Primitive):
 
-    def accept(self, visitor):
-        return visitor.visitEnum(self)
+    def accept(self, visitor, *args):
+        return visitor.visitEnum(self, *args)
 
 
 class Unknown:
