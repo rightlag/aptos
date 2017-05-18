@@ -9,10 +9,8 @@ class RecordVisitor:
             'doc': enumeration.description, 'symbols': enumeration.enum}}
 
     def visitUnion(self, union):
-        children = list(union.type)
-        for i, child in enumerate(children):
-            children[i] = child.accept(self)['type']
-        return {'type': children}
+        return {'type': list(
+            identifier.accept(self)['type'] for identifier in union.type)}
 
     def visitArray(self, array):
         items = array.items.accept(self)
@@ -39,13 +37,62 @@ class RecordVisitor:
         fields = []
         for name, member in declared.properties.items():
             field = member.accept(self)
-            if isinstance(member, (primitives.Object, primitives.Array)):
+            if isinstance(member, (primitives.Record, primitives.Array)):
                 field = {'type': field}
             field.update({'name': name, 'doc': member.description})
             fields.append(field)
+        for item in declared.allOf.items:
+            fields.extend(item.accept(self)['fields'])
         return {
             'type': 'record', 'namespace': __name__, 'name': declared.title,
             'doc': declared.description, 'fields': fields}
 
     def visitString(self, string):
         return {'type': 'string'}
+
+
+class Visitor:
+
+    def visit(self, primitive):
+        primitive = primitive.accept(self)
+        for i, item in enumerate(primitive.allOf.items):
+            primitive.allOf.items[i] = item.accept(self)
+        return primitive
+
+
+class ResolveVisitor(Visitor):
+
+    def __init__(self, context):
+        self.context = context
+
+    def visitUnion(self, union):
+        return union
+
+    def visitArray(self, array):
+        array.items = array.items.accept(self)
+        return array
+
+    def visitInt(self, integer):
+        return integer
+
+    def visitLong(self, long):
+        return long
+
+    def visitString(self, string):
+        return string
+
+    def visitUnknown(self, unknown):
+        value = unknown.value.split('/')[-1]
+        instance = self.context['definitions'][value]
+        return primitives.Creator.create(
+            instance.get('type')).fromJson(instance)
+
+    def visitDeclared(self, declared):
+        for i, item in enumerate(declared.allOf.items):
+            declared.allOf.items[i] = super().visit(item)
+        declared.properties.accept(self)
+        declared.definitions.accept(self)
+        return declared
+
+    def visitEnum(self, enumeration):
+        return enumeration

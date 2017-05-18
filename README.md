@@ -10,92 +10,96 @@
 ```python
 import json
 
-from aptos.util import parse
+from aptos.util import Parser
 from aptos.visitors import RecordVisitor
 
-specification = parse(open('/path/to/schema'))
-record = specification.definitions['Pet'].accept(RecordVisitor())
-print(json.dumps(record, indent=2))
+record = Parser.parse('/path/to/schema')
+schema = record.accept(RecordVisitor())
+print(json.dumps(schema, indent=2))
 ```
 
 ```json
 {
-  "type": "record",
-  "name": "Pet",
-  "namespace": "aptos.visitors",
   "doc": "",
+  "namespace": "aptos.visitors",
+  "name": "Product",
   "fields": [
     {
-      "type": "string",
-      "name": "name",
-      "doc": ""
-    },
-    {
+      "doc": "A geographical coordinate",
+      "name": "warehouseLocation",
       "type": {
-        "type": "record",
-        "name": "Category",
+        "doc": "A geographical coordinate",
         "namespace": "aptos.visitors",
-        "doc": "",
+        "name": "",
         "fields": [
           {
-            "type": "string",
-            "name": "name",
-            "doc": ""
+            "doc": "",
+            "name": "latitude",
+            "type": "long"
           },
           {
-            "type": "int",
-            "name": "id",
-            "doc": ""
+            "doc": "",
+            "name": "longitude",
+            "type": "long"
           }
-        ]
-      },
-      "name": "category",
-      "doc": ""
+        ],
+        "type": "record"
+      }
     },
     {
-      "type": "string",
-      "name": "status",
-      "doc": "pet status in the store"
-    },
-    {
-      "type": "int",
-      "name": "id",
-      "doc": ""
-    },
-    {
-      "type": {
-        "type": "array",
-        "items": "string"
-      },
-      "name": "photoUrls",
-      "doc": ""
-    },
-    {
-      "type": {
-        "type": "array",
-        "items": {
-          "type": "record",
-          "name": "Tag",
-          "namespace": "aptos.visitors",
-          "doc": "",
-          "fields": [
-            {
-              "type": "string",
-              "name": "name",
-              "doc": ""
-            },
-            {
-              "type": "int",
-              "name": "id",
-              "doc": ""
-            }
-          ]
-        }
-      },
+      "doc": "",
       "name": "tags",
-      "doc": ""
+      "type": {
+        "items": "string",
+        "type": "array"
+      }
+    },
+    {
+      "doc": "",
+      "name": "price",
+      "type": "long"
+    },
+    {
+      "doc": "The unique identifier for a product",
+      "name": "id",
+      "type": "long"
+    },
+    {
+      "doc": "",
+      "name": "name",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    {
+      "doc": "",
+      "name": "dimensions",
+      "type": {
+        "doc": "",
+        "namespace": "aptos.visitors",
+        "name": "",
+        "fields": [
+          {
+            "doc": "",
+            "name": "length",
+            "type": "long"
+          },
+          {
+            "doc": "",
+            "name": "width",
+            "type": "long"
+          },
+          {
+            "doc": "",
+            "name": "height",
+            "type": "long"
+          }
+        ],
+        "type": "record"
+      }
     }
-  ]
+  ],
+  "type": "record"
 }
-
 ```

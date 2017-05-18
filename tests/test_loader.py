@@ -1,23 +1,34 @@
+import json
 import os
 import unittest
 
-from aptos.util import parse
-from aptos.primitives import Array, Object
+from aptos.util import Parser
+from aptos.primitives import Array, Record
 
 
 class LoaderTestCase(unittest.TestCase):
 
     def runTest(self):
-        specification = parse(open(os.path.join(
-            os.path.dirname(__file__), 'schemas', 'petstore.json')))
-
-        self.assertEqual(len(specification.definitions), 6)
-        definitions = ['Order', 'Category', 'User', 'Tag', 'Pet',
-                       'ApiResponse']
-        for definition in definitions:
-            self.assertIn(definition, specification.definitions)
-
-        Pet = specification.definitions['Pet']
-        self.assertIsInstance(Pet.properties['category'], Object)
-        self.assertIsInstance(Pet.properties['tags'], Array)
-        self.assertIsInstance(Pet.properties['tags'].items, Object)
+        record = Parser.parse(os.path.join(
+            os.path.dirname(__file__), 'schemas', 'product'))
+        instance = json.loads('''
+        {
+            "id": 2,
+            "name": "An ice sculpture",
+            "price": 12.50,
+            "tags": ["cold", "ice"],
+            "dimensions": {
+                "length": 7.0,
+                "width": 12.0,
+                "height": 9.5
+            },
+            "warehouseLocation": {
+                "latitude": -78.75,
+                "longitude": 20.4
+            }
+        }
+        ''')
+        record(instance)
+        self.assertEqual(len(record.definitions), 1)
+        self.assertIsInstance(record.properties['warehouseLocation'], Record)
+        self.assertIsInstance(record.properties['tags'], Array)
