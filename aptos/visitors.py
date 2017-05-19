@@ -189,7 +189,7 @@ class ValidationVisitor(Visitor):
         assert len(instance.keys()) >= declared.minProperties, (
             '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance.keys()), declared.minProperties))  # noqa: E501
         if declared.required:
-            assert len(set(declared.required).difference(set(instance))) == 0, (
+            assert len(set(declared.required).difference(set(instance))) == 0, (  # noqa: E501
                 '%r is not the name of a property in the instance %r' % (declared.required, instance.keys()))  # noqa: E501
         for name, member in declared.properties.items():
             member.accept(self, instance[name])
