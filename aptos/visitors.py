@@ -128,7 +128,8 @@ class ValidationVisitor(Visitor):
         enumeration = self.visitPrimitive(enumeration, *args)
         instance = args[0]
         if enumeration.enum:
-            assert instance in enumeration.enum
+            assert instance in enumeration.enum, (
+                '%r not equal to one of the elements in this keyword\'s array value %r' % (instance, enumeration.enum))  # noqa: E501
 
     def visitArray(self, array, *args):
         array = self.visitPrimitive(array, *args)
@@ -137,19 +138,25 @@ class ValidationVisitor(Visitor):
                 array.items, primitives.Array):
             assert len(instance) <= array.items
         if array.maxItems:
-            assert len(instance) <= array.maxItems
-        assert len(instance) >= array.minItems
+            assert len(instance) <= array.maxItems, (
+                '%r is not less than, or equal to, the value of this keyword %r' % (len(instance), array.maxItems))  # noqa: E501
+        assert len(instance) >= array.minItems, (
+            '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance), array.minItems))  # noqa: E501
         if array.uniqueItems:
-            assert len(list(set(instance))) == len(instance)
+            assert len(list(set(instance))) == len(instance), (
+                '%r elements are not unique %r' % (instance))
 
     def visitString(self, string, *args):
         string = self.visitPrimitive(string, *args)
         instance = args[0]
         if string.maxLength:
-            assert len(instance) <= string.maxLength
-        assert len(instance) >= string.minLength
+            assert len(instance) <= string.maxLength, (
+                '%r is not less than, or equal to, the value of this keyword %r' % (len(instance), string.maxLength))  # noqa: E501
+        assert len(instance) >= string.minLength, (
+            '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance), string.minLength))  # noqa: E501
         if string.pattern:
-            assert re.match(string.pattern, instance) is not None
+            assert re.match(string.pattern, instance) is not None, (
+                '%r does not match the instance successfully %r' % (string.pattern, instance))  # noqa: E501
 
     def visitInt(self, integer, *args):
         # TODO: write `visitInt` functionality.
@@ -177,9 +184,12 @@ class ValidationVisitor(Visitor):
         declared = self.visitPrimitive(declared, *args)
         instance = args[0] if args else self.instance
         if declared.maxProperties:
-            assert len(instance.keys()) <= declared.maxProperties
-        assert len(instance.keys()) >= declared.minProperties
+            assert len(instance.keys()) <= declared.maxProperties, (
+                '%r is not less than, or equal to, the value of this keyword %r' % (len(instance.keys()), declared.maxProperties))  # noqa: E501
+        assert len(instance.keys()) >= declared.minProperties, (
+            '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance.keys()), declared.minProperties))  # noqa: E501
         if declared.required:
-            assert len(set(declared.required).difference(set(instance))) == 0
+            assert len(set(declared.required).difference(set(instance))) == 0, (  # noqa: E501
+                '%r is not the name of a property in the instance %r' % (declared.required, instance.keys()))  # noqa: E501
         for name, member in declared.properties.items():
             member.accept(self, instance[name])
