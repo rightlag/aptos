@@ -28,22 +28,22 @@ class Visitor:
             allOf.items[i] = item.accept(self, *args)
 
     def visitUnion(self, union, *args):
-        return self.visitPrimitive(union)
+        return self.visitPrimitive(union, *args)
 
     def visitArray(self, array, *args):
-        return self.visitPrimitive(array)
+        return self.visitPrimitive(array, *args)
 
     def visitInt(self, integer, *args):
-        return self.visitPrimitive(integer)
+        return self.visitPrimitive(integer, *args)
 
     def visitLong(self, long, *args):
-        return self.visitPrimitive(long)
+        return self.visitPrimitive(long, *args)
 
     def visitString(self, string, *args):
-        return self.visitPrimitive(string)
+        return self.visitPrimitive(string, *args)
 
     def visitEnum(self, enumeration, *args):
-        return self.visitPrimitive(enumeration)
+        return self.visitPrimitive(enumeration, *args)
 
     def visitDeclared(self, declared, *args):
         declared = self.visitPrimitive(declared, *args)
@@ -162,6 +162,16 @@ class ValidationVisitor(Visitor):
     def visitAllOf(self, allOf, *args):
         for item in allOf.items:
             item.accept(self, *args)
+
+    def visitNull(self, null, *args):
+        self.visitPrimitive(null, *args)
+
+    def visitUnion(self, union, *args):
+        union = self.visitPrimitive(union, *args)
+        instance = args[0]
+        cls = primitives.Translator.translate(instance)
+        index = [type.__class__ for type in union.type].index(cls)
+        union.type[index].accept(self, *args)
 
     def visitDeclared(self, declared, *args):
         declared = self.visitPrimitive(declared, *args)

@@ -22,6 +22,22 @@ class Creator:
         }[identifier.__class__](identifier)
 
 
+class Translator:
+
+    @staticmethod
+    def translate(instance):
+        return {
+            dict: Record,
+            list: Array,
+            tuple: Array,
+            str: String,
+            int: Integer,
+            float: Number,
+            bool: Boolean,
+            type(None): Null,
+        }[instance.__class__]
+
+
 class Component:
 
     def accept(self, visitor, *args):
