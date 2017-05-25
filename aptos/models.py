@@ -78,8 +78,8 @@ class TypeVisitor(OpenAPIVisitor, visitors.TypeVisitor):
             raise ValueError()
         group = match.group(9)
         if group == '/':
-            return Creator.create(
-                context.get('type')).fromJson(context).accept(self)
+            primitive = Creator.create(context.get('type')).fromJson(context)
+            return primitive.accept(self)
         components = group.split('/')[1:]
         context = context[components.pop(0)]
         unknown.value = '#/{}'.format('/'.join(components))
