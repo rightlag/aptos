@@ -6,7 +6,7 @@ from .primitives import (
     Component,
     Creator
 )
-from aptos import visitors
+from . import visitors
 
 
 class OpenAPIVisitor:
@@ -31,6 +31,7 @@ class OpenAPIVisitor:
     def visit_operation(self, operation, *args):
         operation.requestBody.accept(self, *args)
         operation.responses.accept(self, *args)
+        operation.callbacks.accept(self, *args)
         return operation
 
     def visit_responses(self, responses, *args):
@@ -57,6 +58,15 @@ class OpenAPIVisitor:
     def visit_request_body(self, request_body, *args):
         request_body.content.accept(self, *args)
         return request_body
+
+    def visit_callbacks(self, callbacks, *args):
+        for name, callback in callbacks.items():
+            callbacks[name] = callback.accept(self, *args)
+
+    def visit_callback(self, callback, *args):
+        for name, path_item in callback.items():
+            callback[name] = path_item.accept(self, *args)
+        return callback
 
 
 class TypeVisitor(OpenAPIVisitor, visitors.TypeVisitor):
@@ -110,6 +120,7 @@ class Components(dict, Component):
             instance['schemas'][name] = Creator.create(
                 schema.get('type')).fromJson(schema)
         instance['responses'] = Responses.fromJson(instance.get('responses'))
+        instance['callbacks'] = Callbacks.fromJson(instance.get('callbacks'))
         return cls(**instance)
 
     def accept(self, visitor, *args):
@@ -218,6 +229,8 @@ class Operation:
         instance['requestBody'] = RequestBody.fromJson(
             instance.get('requestBody', {}))
         instance['responses'] = Responses.fromJson(instance['responses'])
+        instance['callbacks'] = Callbacks.fromJson(
+            instance.get('callbacks', {}))
         return cls(**instance)
 
     def accept(self, visitor, *args):
@@ -267,6 +280,34 @@ class Content(dict, Component):
 
     def accept(self, visitor, *args):
         return visitor.visit_content(self, *args)
+
+
+class Callbacks(dict, Component):
+
+    @classmethod
+    def fromJson(cls, instance=None):
+        if instance is None:
+            instance = {}
+        for key, value in instance.items():
+            instance[key] = Callback.fromJson(value)
+        return cls(instance)
+
+    def accept(self, visitor, *args):
+        return visitor.visit_callbacks(self, *args)
+
+
+class Callback(dict, Component):
+
+    @classmethod
+    def fromJson(cls, instance=None):
+        if instance is None:
+            instance = {}
+        for key, value in instance.items():
+            instance[key] = PathItem.fromJson(value)
+        return cls(instance)
+
+    def accept(self, visitor, *args):
+        return visitor.visit_callback(self, *args)
 
 
 class MediaType(Component):
