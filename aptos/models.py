@@ -216,8 +216,8 @@ class Operation:
     @classmethod
     def fromJson(cls, instance):
         instance['requestBody'] = RequestBody.fromJson(
-            instance.get('requestBody'))
-        instance['responses'] = Responses.fromJson(instance.get('responses'))
+            instance.get('requestBody', {}))
+        instance['responses'] = Responses.fromJson(instance['responses'])
         return cls(**instance)
 
     def accept(self, visitor, *args):
