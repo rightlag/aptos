@@ -63,12 +63,13 @@ class TypeVisitor(OpenAPIVisitor, visitors.TypeVisitor):
 
     def visitUnknown(self, unknown, *args):
         context = deepcopy(self.context) if not args else args[0]
-        match = re.match(r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?', unknown.value)
+        match = re.match(r'^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))?', unknown.value)  # noqa: E501
         if match is None:
             raise ValueError()
         group = match.group(9)
         if group == '/':
-            return Creator.create(context.get('type')).fromJson(context).accept(self)
+            return Creator.create(
+                context.get('type')).fromJson(context).accept(self)
         components = group.split('/')[1:]
         context = context[components.pop(0)]
         unknown.value = '#/{}'.format('/'.join(components))
