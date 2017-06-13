@@ -31,7 +31,9 @@ class Visitor:
         return self.visitPrimitive(union, *args)
 
     def visitArray(self, array, *args):
-        return self.visitPrimitive(array, *args)
+        array = self.visitPrimitive(array, *args)
+        array.items = array.items.accept(self, *args)
+        return array
 
     def visitInt(self, integer, *args):
         return self.visitPrimitive(integer, *args)
