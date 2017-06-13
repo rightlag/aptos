@@ -1,5 +1,8 @@
 <p align="center">
   <a href="https://github.com/pennsignals/aptos"><img src="https://cdn.rawgit.com/pennsignals/aptos/master/assets/title.svg" alt="aptos"></a>
+  <br>
+  <br>
+  <br>
 </p>
 
 <p align="center">
