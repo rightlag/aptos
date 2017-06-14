@@ -15,6 +15,10 @@
 
 JSON Schema defines the media type `"application/schema+json"`, a JSON-based format for describing the structure of JSON data.
 
+<p align="center">
+    <img src="https://user-images.githubusercontent.com/2184329/27149976-7a61fa2c-5113-11e7-91be-ef829f4479aa.gif">
+</p>
+
 # Usage
 
 Given a JSON Schema document, `aptos` can validate client-submitted data to require that it satisfies a certain number of criteria.
