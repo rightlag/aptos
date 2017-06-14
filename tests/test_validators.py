@@ -41,7 +41,7 @@ class ObjectValidatorTestCase(unittest.TestCase):
             component.accept(ValidationVisitor({'a': 0}))
         with self.assertRaises(AssertionError):
             component.accept(ValidationVisitor(
-                {'a': 0, 'b': 1, 'c': 2, 'd': 3,}))
+                {'a': 0, 'b': 1, 'c': 2, 'd': 3}))
 
 
 class ArrayValidatorTestCase(unittest.TestCase):
