@@ -11,6 +11,8 @@
   <a href="https://coveralls.io/github/pennsignals/aptos"><img src="https://img.shields.io/coveralls/pennsignals/aptos.svg?style=flat-square"></a>
 </p>
 
+---
+
 `aptos` ([Avro](https://avro.apache.org/), [Protobuf](https://developers.google.com/protocol-buffers/), [Thrift](https://thrift.apache.org/) on [Swagger](http://swagger.io/)) is a module that parses [JSON Schema](http://json-schema.org/) documents to validate client-submitted data and convert JSON schema documents to Avro, Protobuf, or Thrift serialization formats.
 
 JSON Schema defines the media type `"application/schema+json"`, a JSON-based format for describing the structure of JSON data.
