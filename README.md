@@ -16,10 +16,14 @@
 JSON Schema defines the media type `"application/schema+json"`, a JSON-based format for describing the structure of JSON data.
 
 <p align="center">
-    <img src="https://user-images.githubusercontent.com/2184329/27149976-7a61fa2c-5113-11e7-91be-ef829f4479aa.gif" width="800">
+  <img src="https://user-images.githubusercontent.com/2184329/27149976-7a61fa2c-5113-11e7-91be-ef829f4479aa.gif" width="800">
 </p>
 
 # Usage
+
+`aptos` supports validating client-submitted data and generating Avro, Protobuf, and Thrift structured messages from a given JSON Schema document.
+
+## Data Validation
 
 Given a JSON Schema document, `aptos` can validate client-submitted data to require that it satisfies a certain number of criteria.
 
@@ -104,4 +108,108 @@ instance = {
     }
 }
 record.accept(ValidationVisitor(instance))
+```
+
+## Structured Message Generation
+
+Given a JSON Schema document, `aptos` can generate structured messages including Avro, Protobuf, and Thrift.
+
+### Avro
+
+For brevity, the [Product](https://github.com/pennsignals/aptos/blob/master/tests/schemas/product) schema is omitted from the example.
+
+```python
+import json
+
+from aptos.util import Parser
+from aptos.visitors import RecordVisitor
+
+record = Parser.parse('/path/to/schema')
+schema = record.accept(RecordVisitor())
+print(json.dumps(schema, indent=2))
+```
+
+The JSON-formatted document below is the Avro schema generated from the JSON Schema document:
+
+```json
+{
+  "namespace": "aptos.visitors",
+  "fields": [
+    {
+      "type": "long",
+      "doc": "The unique identifier for a product",
+      "name": "id"
+    },
+    {
+      "type": {
+        "items": "string",
+        "type": "array"
+      },
+      "doc": "",
+      "name": "tags"
+    },
+    {
+      "type": {
+        "namespace": "aptos.visitors",
+        "fields": [
+          {
+            "type": "long",
+            "doc": "",
+            "name": "latitude"
+          },
+          {
+            "type": "long",
+            "doc": "",
+            "name": "longitude"
+          }
+        ],
+        "type": "record",
+        "doc": "A geographical coordinate",
+        "name": ""
+      },
+      "doc": "A geographical coordinate",
+      "name": "warehouseLocation"
+    },
+    {
+      "type": "string",
+      "doc": "",
+      "name": "name"
+    },
+    {
+      "type": {
+        "namespace": "aptos.visitors",
+        "fields": [
+          {
+            "type": "long",
+            "doc": "",
+            "name": "width"
+          },
+          {
+            "type": "long",
+            "doc": "",
+            "name": "height"
+          },
+          {
+            "type": "long",
+            "doc": "",
+            "name": "length"
+          }
+        ],
+        "type": "record",
+        "doc": "",
+        "name": ""
+      },
+      "doc": "",
+      "name": "dimensions"
+    },
+    {
+      "type": "long",
+      "doc": "",
+      "name": "price"
+    }
+  ],
+  "type": "record",
+  "doc": "",
+  "name": "Product"
+}
 ```
