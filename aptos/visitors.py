@@ -23,9 +23,9 @@ class Visitor:
             properties[name] = member.accept(self, *args)
 
     def visitAllOf(self, allOf, *args):
-        for i, item in enumerate(allOf.items):
+        for i, item in enumerate(allOf):
             item = self.visitPrimitive(item, *args)
-            allOf.items[i] = item.accept(self, *args)
+            allOf[i] = item.accept(self, *args)
 
     def visitUnion(self, union, *args):
         return self.visitPrimitive(union, *args)
@@ -93,7 +93,7 @@ class RecordVisitor(Visitor):
                 field = {'type': field}
             field.update({'name': name, 'doc': member.description})
             fields.append(field)
-        for item in declared.allOf.items:
+        for item in declared.allOf:
             # Index `fields` if `item` is of type `Record`.
             fields.extend(
                 item.accept(self).get('fields', [item.accept(self, *args)]))
@@ -123,19 +123,28 @@ class ValidationVisitor(Visitor):
         self.instance = instance
 
     def visitPrimitive(self, primitive, *args):
+        instance = self.instance
+        for element in primitive.enum:
+            assert instance in primitive.enum
         primitive.allOf.accept(self, *args)
         return primitive
 
     def visitEnum(self, enumeration, *args):
+        instance = self.instance
         enumeration = self.visitPrimitive(enumeration, *args)
-        instance = args[0]
         if enumeration.enum:
             assert instance in enumeration.enum, (
                 '%r not equal to one of the elements in this keyword\'s array value %r' % (instance, enumeration.enum))  # noqa: E501
 
     def visitArray(self, array, *args):
+        instance = self.instance
         array = self.visitPrimitive(array, *args)
-        instance = args[0]
+        if isinstance(array.items, primitives.Component):
+            for element in instance:
+                array.items.accept(ValidationVisitor(element))
+        else:
+            for i, element in enumerate(instance):
+                array.items[i].accept(ValidationVisitor(element))
         if not array.additionalItems and isinstance(
                 array.items, primitives.Array):
             assert len(instance) <= array.items
@@ -146,11 +155,11 @@ class ValidationVisitor(Visitor):
             '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance), array.minItems))  # noqa: E501
         if array.uniqueItems:
             assert len(list(set(instance))) == len(instance), (
-                '%r elements are not unique %r' % (instance))
+                '%r elements are not unique %r' % (instance, array.uniqueItems))  # noqa: E501
 
     def visitString(self, string, *args):
+        instance = self.instance
         string = self.visitPrimitive(string, *args)
-        instance = args[0]
         if string.maxLength:
             assert len(instance) <= string.maxLength, (
                 '%r is not less than, or equal to, the value of this keyword %r' % (len(instance), string.maxLength))  # noqa: E501
@@ -169,7 +178,7 @@ class ValidationVisitor(Visitor):
         pass
 
     def visitAllOf(self, allOf, *args):
-        for item in allOf.items:
+        for item in allOf:
             item.accept(self, *args)
 
     def visitNull(self, null, *args):
@@ -183,15 +192,19 @@ class ValidationVisitor(Visitor):
         union.type[index].accept(self, *args)
 
     def visitDeclared(self, declared, *args):
+        instance = self.instance
         declared = self.visitPrimitive(declared, *args)
-        instance = args[0] if args else self.instance
         if declared.maxProperties:
             assert len(instance.keys()) <= declared.maxProperties, (
                 '%r is not less than, or equal to, the value of this keyword %r' % (len(instance.keys()), declared.maxProperties))  # noqa: E501
         assert len(instance.keys()) >= declared.minProperties, (
             '%r is not greater than, or equal to, the value of this keyword %r' % (len(instance.keys()), declared.minProperties))  # noqa: E501
-        if declared.required:
-            assert len(set(declared.required).difference(set(instance))) == 0, (  # noqa: E501
-                '%r is not the name of a property in the instance %r' % (declared.required, instance.keys()))  # noqa: E501
-        for name, member in declared.properties.items():
-            member.accept(self, instance[name])
+        for item in declared.required:
+            assert item in instance, '%r is not the name of a property in the instance %r' % (declared.required, item)
+        declared.properties.accept(self)
+
+    def visitProperties(self, properties, *args):
+        for name, member in self.instance.items():
+            if properties.get(name) is None:
+                continue
+            properties[name].accept(ValidationVisitor(member))

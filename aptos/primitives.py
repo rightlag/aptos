@@ -56,10 +56,11 @@ class Primitive(Component):
         self.enum = [] if enum is None else list(set(enum))
         self.const = const
         self.type = type
-        self.allOf = [] if allOf is None else allOf
+        self.allOf = AllOf() if allOf is None else allOf
         self.anyOf = [] if anyOf is None else anyOf
         self.oneOf = [] if oneOf is None else oneOf
-        self.definitions = {} if definitions is None else definitions
+        self.definitions = (
+            Definitions() if definitions is None else definitions)
 
         # Metadata keywords
         self.title = title
@@ -124,14 +125,16 @@ class Array(Primitive):
 
         @classmethod
         def fromJson(cls, instance):
-            pass
+            return list(
+                Creator.create(element.get('type')).fromJson(element)
+                for element in instance)
 
     def __init__(self, additionalItems=None, items=None, maxItems=0,
                  minItems=0, uniqueItems=False, contains=None, **kwargs):
         super().__init__(**kwargs)
         self.additionalItems = (
             {} if additionalItems is None else additionalItems)
-        self.items = {} if items is None else items
+        self.items = items
         self.maxItems = maxItems
         self.minItems = minItems
         self.uniqueItems = uniqueItems
@@ -151,11 +154,7 @@ class Array(Primitive):
         return visitor.visitArray(self, *args)
 
 
-class AllOf(Array):
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.minItems = 1
+class AllOf(list):
 
     @classmethod
     def fromJson(cls, items=None):
@@ -163,7 +162,7 @@ class AllOf(Array):
             items = []
         items = list(
             Creator.create(item.get('type')).fromJson(item) for item in items)
-        return cls(items=items)
+        return cls(items)
 
     def accept(self, visitor, *args):
         return visitor.visitAllOf(self, *args)
@@ -240,7 +239,7 @@ class Record(Primitive):
         self.maxProperties = maxProperties
         self.minProperties = minProperties
         self.required = [] if required is None else list(set(required))
-        self.properties = {} if properties is None else dict(properties)
+        self.properties = properties
         self.patternProperties = (
             {} if patternProperties is None else dict(patternProperties))
         self.additionalProperties = (
