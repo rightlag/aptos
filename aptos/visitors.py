@@ -125,7 +125,7 @@ class ValidationVisitor(Visitor):
     def visitPrimitive(self, primitive, *args):
         instance = self.instance
         for element in primitive.enum:
-            assert instance in primitive.enum
+            assert instance in primitive.enum, '%r not equal to one of the elements in this keyword\'s array value %r' % (instance, primitive.enum)  # noqa: E501
         primitive.allOf.accept(self, *args)
         return primitive
 
