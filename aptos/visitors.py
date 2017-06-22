@@ -74,10 +74,10 @@ class RecordVisitor(Visitor):
         return {'type': 'boolean'}
 
     def visitInt(self, integer, *args):
-        return {'type': 'int'}
+        return {'type': 'long'}
 
     def visitLong(self, long, *args):
-        return {'type': 'long'}
+        return {'type': 'double'}
 
     def visitFloat(self, float, *args):
         return {'type': 'float'}
