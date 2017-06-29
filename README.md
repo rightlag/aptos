@@ -1,7 +1,7 @@
 <p align="center">
   <br>
   <br>
-  <a href="https://github.com/pennsignals/aptos"><img src="https://cdn.rawgit.com/pennsignals/aptos/master/assets/title.svg" alt="aptos"></a>
+  <a href="https://github.com/pennsignals/aptos"><img src="https://rawgit.com/rightlag/4042a246cf8639e56c69e0b62de9cb11/raw/fc71de19c792ec9596f0343962f31a4a8309a46f/aptos.svg" alt="aptos"></a>
   <br>
   <br>
 </p>
@@ -131,7 +131,7 @@ schema = record.accept(RecordVisitor())
 print(json.dumps(schema, indent=2))
 ```
 
-The JSON-formatted document below is the Avro schema generated from the JSON Schema document:
+The preceding code generates the following Avro schema:
 
 ```json
 {
