@@ -11,5 +11,6 @@ setup(
     classifiers=[
         'Development Status :: 3 - Alpha',
     ],
-    license='License :: OSI Approved :: MIT License'
+    license='License :: OSI Approved :: MIT License',
+    packages=['aptos']
 )
