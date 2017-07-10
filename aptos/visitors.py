@@ -185,8 +185,8 @@ class ValidationVisitor(Visitor):
         self.visitPrimitive(null, *args)
 
     def visitUnion(self, union, *args):
+        instance = self.instance
         union = self.visitPrimitive(union, *args)
-        instance = args[0]
         cls = primitives.Translator.translate(instance)
         index = [type.__class__ for type in union.type].index(cls)
         union.type[index].accept(self, *args)
